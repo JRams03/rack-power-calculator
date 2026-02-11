@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Servers</title>
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+
+<script type="module">
+import { loadLayout } from "../app/layout.js";
+import { servers } from "../data/servers.js";
+
+function renderTable(title, list) {
+  const rows = list.map(s => `
+    <tr>
+      <td>${s.id}</td>
+      <td>${s.name}</td>
+      <td>${s.psuCount}</td>
+      <td>${s.psuWatts}</td>
+      <td>${s.voltage}</td>
+      <td>${s.uHeight}U</td>
+      <td>
+        ${s.wiki ? `<a href="${s.wiki}" target="_blank">wiki</a>` : "-"}
+      </td>
+    </tr>
+  `).join("");
+
+  return `
+    <h3>${title}</h3>
+    <table>
+      <colgroup>
+        <col style="width:10%">  
+        <col style="width:20%">
+        <col style="width:8%">
+        <col style="width:12%">
+        <col style="width:8%">
+        <col style="width:6%">
+        <col style="width:10%">
+      </colgroup>
+
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>PSU</th>
+          <th>Watts</th>
+          <th>Volt</th>
+          <th>U</th>
+          <th>Wiki</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+
+function render() {
+  const supermicro = servers.filter(s =>
+    s.name.toLowerCase().includes("supermicro")
+  );
+
+  const lenovo = servers.filter(s =>
+    s.name.toLowerCase().includes("lenovo")
+  );
+
+  document.getElementById("content").innerHTML = `
+    <h2>Servers</h2>
+
+    ${renderTable("Supermicro", supermicro)}
+    ${renderTable("Lenovo", lenovo)}
+  `;
+
+
+document.getElementById("content").innerHTML = `
+  <h2>Servers</h2>
+
+  <div class="tables-grid">
+    <div class="table-block">
+      ${renderTable("Supermicro", supermicro)}
+    </div>
+
+    <div class="table-block">
+      ${renderTable("Lenovo", lenovo)}
+    </div>
+  </div>
+`;
+
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadLayout("servers");
+  render();
+  document.body.classList.add("page-loaded");
+});
+
+</script>
+
+</body>
+</html>

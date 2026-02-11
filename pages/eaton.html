@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Eaton</title>
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+
+<script type="module">
+/* =========================================================
+   MODULE IMPORTS
+   ========================================================= */
+
+import { loadLayout } from "../app/layout.js";
+import { servers } from "../data/servers.js";
+import { appState, setSlot } from "../app/state.js";
+import {
+  calculateSlot,
+  calculateBanks,
+  calculatePhases,
+  LIMITS,
+  usagePercent
+} from "../core/calculator.js";
+
+/* =========================================================
+   CONFIGURATION
+   ========================================================= */
+
+/**
+ * Allowed utilization presets for servers.
+ * These map to power draw multipliers in the calculator.
+ */
+const UTIL = ["low", "normal", "high", "max"];
+
+/**
+ * Default utilization when placing or resetting servers.
+ */
+const DEFAULT_UTIL = "normal";
+
+
+/**
+ * Number of rack slots per PDU bank.
+ * Bank index → Letter:
+ * 0=A, 1=B, 2=C, 3=D, 4=E, 5=F
+ *
+ * Note: Banks C and D are intentionally shorter.
+ */
+const BANK_SLOTS = [8, 8, 6, 6, 8, 8];
+
+/**
+ * Total usable rack slots derived from bank layout.
+ */
+const TOTAL_SLOTS = BANK_SLOTS.reduce((a, b) => a + b, 0);
+
+/**
+ * Number of electrical phases.
+ */
+const PHASE_COUNT = 3;
+
+
+/* =========================================================
+   UI HELPERS
+   ========================================================= */
+
+/**
+ * Shows a temporary warning bubble on the Server column
+ * for a given rack slot (e.g. invalid 2U placement).
+ */
+function showFloatingWarning(slot, message) {
+  const row = document.querySelector(`tr[data-slot="${slot}"]`);
+  if (!row) return;
+
+  const cell = row.children[2]; // Server column
+
+  cell.classList.remove("slot-warning");
+  const old = cell.querySelector(".slot-warning-bubble");
+  if (old) old.remove();
+
+  cell.classList.add("slot-warning");
+
+  const bubble = document.createElement("div");
+  bubble.className = "slot-warning-bubble";
+  bubble.textContent = message;
+
+  cell.style.position = "relative";
+  cell.appendChild(bubble);
+
+  setTimeout(() => {
+    cell.classList.remove("slot-warning");
+    bubble.remove();
+  }, 3000);
+}
+
+/* =========================================================
+   BANK & PHASE RESOLUTION
+   ========================================================= */
+
+/**
+ * Returns the bank index for a given rack slot.
+ */
+function getBankIndex(slot) {
+  let count = 0;
+  for (let i = 0; i < BANK_SLOTS.length; i++) {
+    count += BANK_SLOTS[i];
+    if (slot <= count) return i;
+  }
+  return null;
+}
+
+
+
+/**
+ * Phase-to-bank mapping:
+ * L1 = A+B, L2 = C+D, L3 = E+F
+ */
+const PHASE_BANKS = [
+  [0, 1],
+  [2, 3],
+  [4, 5]
+];
+
+/**
+ * Returns the phase index for a rack slot.
+ */
+function getPhaseIndex(slot) {
+  const bankIndex = getBankIndex(slot);
+  for (let p = 0; p < PHASE_BANKS.length; p++) {
+    if (PHASE_BANKS[p].includes(bankIndex)) return p;
+  }
+  return null;
+}
+
+/**
+ * True if the rack slot starts a new phase group.
+ */
+function isPhaseStartSlot(slot) {
+  return slot === 1 || getPhaseIndex(slot) !== getPhaseIndex(slot - 1);
+}
+
+/* =========================================================
+   RACK → PDU MAPPING
+   ========================================================= */
+
+
+/* =========================================================
+   COLOR & VISUAL HELPERS
+   ========================================================= */
+
+/**
+ * Returns a color gradient from green → orange → red
+ * based on a normalized load value (0.0 – 1.0).
+ *
+ * Used for bank and phase load visualization.
+ */
+function gradient(p) {
+  p = Math.max(0, Math.min(1, p));
+
+  const green  = { r: 9,   g: 156, b: 28  };
+  const warn   = { r: 243, g: 156, b: 18  };
+  const danger = { r: 231, g: 76,  b: 60  };
+
+  let from, to, t;
+
+  if (p < 0.8) {
+    from = green;
+    to   = warn;
+    t    = p / 0.8;
+  } else {
+    from = warn;
+    to   = danger;
+    t    = (p - 0.8) / 0.2;
+  }
+
+  return `rgb(
+    ${Math.round(from.r + (to.r - from.r) * t)},
+    ${Math.round(from.g + (to.g - from.g) * t)},
+    ${Math.round(from.b + (to.b - from.b) * t)}
+  )`;
+}
+
+/* =========================================================
+   U-HEIGHT & SLOT PLACEMENT HELPERS
+   ========================================================= */
+
+/**
+ * Attempts to detect server height (U) from a CSV line.
+ * Supports formats like: "1U", "2U", "U4".
+ *
+ * @param {string} line - Raw CSV line
+ * @param {number} fallback - Default U height if none detected
+ */
+function detectUHeightFromCSV(line, fallback = 1) {
+  const l = line.toLowerCase();
+
+  const match1 = l.match(/(?:^|\D)([124])u(?:\D|$)/);
+  if (match1) return Number(match1[1]);
+
+  const match2 = l.match(/u([124])/);
+  if (match2) return Number(match2[1]);
+
+  return fallback;
+}
+
+/**
+ * Validates whether a server of given U height
+ * can be placed at the specified rack slot.
+ *
+ * Rules enforced:
+ * - All required slots must be empty
+ * - Multi-U servers cannot overlap other servers
+ * - Placement must stay within the same bank
+ * - Placement must stay within the same phase
+ */
+function fitsUHeight(startSlot, uHeight) {
+if (isPSUFeedSlot(startSlot)) return false;
+
+  // Check that required slots are free
+  for (let i = 0; i < uHeight; i++) {
+    const slot = startSlot + i;
+    if (slot > TOTAL_SLOTS) return false;
+    if (appState.slots[slot].serverId) return false;
+    if (appState.slots[slot].occupiedBy) return false;
+    if (isPSUFeedSlot(slot)) return false;
+
+  }
+
+  // For multi-U servers, slot directly below must be free
+  if (uHeight > 1) {
+    const below = startSlot + 1;
+    if (
+      below <= TOTAL_SLOTS &&
+      (
+        appState.slots[below]?.serverId ||
+        appState.slots[below]?.occupiedBy
+      )
+    ) {
+      return false;
+    }
+  }
+
+  // Bank and phase must remain consistent
+  const bank  = getBankIndex(startSlot);
+  const phase = getPhaseIndex(startSlot);
+
+  for (let i = 1; i < uHeight; i++) {
+    const s = startSlot + i;
+    if (getBankIndex(s) !== bank) return false;
+    if (getPhaseIndex(s) !== phase) return false;
+  }
+
+  return true;
+}
+
+/**
+ * Marks additional slots as occupied by a multi-U server.
+ */
+function blockSlots(startSlot, uHeight) {
+  for (let i = 1; i < uHeight; i++) {
+    setSlot(startSlot + i, "occupiedBy", startSlot);
+  }
+}
+
+/**
+ * Clears occupied slots belonging to a given starting slot.
+ * Used when removing or relocating servers.
+ */
+function clearBlockedSlots(startSlot) {
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    if (appState.slots[i].occupiedBy === startSlot) {
+      setSlot(i, "occupiedBy", null);
+    }
+  }
+}
+
+/* =========================================================
+   CSV IMPORT HELPER
+   ========================================================= */
+
+function detectSLtag(text) {
+  if (!text) return null;
+
+  const match = text.match(/\b((?:SL01|LS)[A-Z0-9_-]*)\b/i);
+  return match ? match[1].toUpperCase() : null;
+}
+
+function detectLink(text) {
+  const match = text.match(/https?:\/\/[^\s"]+/i);
+  return match ? match[0] : null;
+}
+
+function detectGeneration(text) {
+  const match = text.match(/\bV(\d)\b/i);
+  return match ? `v${match[1]}` : null;
+}
+
+
+
+/* =========================================================
+   CSV IMPORT (BLOCK-BASED RACK PARSING)
+   ========================================================= */
+
+/**
+ * Imports a CSV file exported from IMS and places servers
+ * into the rack based on detected slot blocks.
+ *
+ * The importer works block-based:
+ * - A new block starts when a line contains "slXX"
+ * - All following lines belong to that slot until a new one starts
+ * - Rack ID is auto-detected from "<rack>.sr" (e.g. ams03.sr, fra02.sr)
+ */
+function importCSV(file) {
+  const reader = new FileReader();
+
+  reader.onload = e => {
+    const lines = e.target.result.split(/\r?\n/);
+
+    console.group("CSV IMPORT (block based)");
+    console.log("Total raw lines:", lines.length);
+
+    const blocks = [];
+    let current = null;
+    let detectedRackId = null;
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+
+    function normalize(str) {
+      return str.toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function detectGeneration(text) {
+      // alleen expliciete V3, niets anders forceren
+      const m = text.match(/[-_\s]v(3)\b/i);
+      return m ? `v${m[1]}` : null;
+    }
+
+    function placeUnknown(slot, rawText, sltag, link) {
+      setSlot(slot, "serverId", "__UNKNOWN__");
+      setSlot(slot, "utilization", null);
+      setSlot(slot, "unknownLabel", rawText.trim());
+      setSlot(slot, "sltag", sltag);
+      setSlot(slot, "sltagLink", link);
+    }
+
+    /* =========================================================
+       BUILD SLOT BLOCKS
+       ========================================================= */
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+
+      const lower = line.toLowerCase();
+      const slotMatch = lower.match(/sl(\d{1,2})/);
+
+      if (slotMatch) {
+        if (current) blocks.push(current);
+
+        current = {
+          slot: Number(slotMatch[1]),
+          text: line
+        };
+      } else if (current) {
+        current.text += " " + line;
+      }
+    }
+
+    if (current) blocks.push(current);
+
+    console.log("Total blocks detected:", blocks.length);
+
+    /* =========================================================
+       PROCESS BLOCKS
+       ========================================================= */
+
+    for (const block of blocks) {
+      console.groupCollapsed(`BLOCK slot ${block.slot}`);
+
+      const rawText = block.text;
+      const lower   = rawText.toLowerCase();
+      const normTxt = normalize(rawText);
+      const slot    = block.slot;
+
+      console.log("block text:", rawText);
+
+      /* ---- SL tag & link ---- */
+      const sltag = detectSLtag(rawText);
+      const link  = detectLink(rawText);
+
+      /* ---- rack-id ---- */
+      const rackMatch = lower.match(/([a-z0-9]+)\.sr/);
+      if (!rackMatch) {
+        console.log("⏭ skipped: no rack id");
+        console.groupEnd();
+        continue;
+      }
+
+      const rackId = rackMatch[1];
+      if (!detectedRackId) detectedRackId = rackId;
+      if (rackId !== detectedRackId) {
+        console.log("⏭ skipped: other rack");
+        console.groupEnd();
+        continue;
+      }
+
+      /* ---- slot range ---- */
+      if (slot < 1 || slot > TOTAL_SLOTS) {
+        console.log("❌ slot out of range:", slot);
+        console.groupEnd();
+        continue;
+      }
+
+      /* =====================================================
+         MODEL RESOLUTION
+         ===================================================== */
+
+      const generation = detectGeneration(rawText);
+      const uHeight = detectUHeightFromCSV(rawText, 1);
+
+      console.log("detected generation:", generation);
+      console.log("detected uHeight:", uHeight);
+
+      /* ---- 1️⃣ baseId match (genormaliseerd, NIET generatie-afhankelijk) ---- */
+      let baseCandidates = servers.filter(s =>
+        !s.blocked &&                    // ⬅️ BELANGRIJK
+        s.baseId &&
+        normTxt.includes(normalize(s.baseId))
+      );
+
+
+      console.log(
+        "base candidates:",
+        baseCandidates.map(s => s.id)
+      );
+
+      if (!baseCandidates.length) {
+        console.warn("⚠ UNKNOWN (no baseId match)");
+        placeUnknown(slot, rawText, sltag, link);
+        console.groupEnd();
+        continue;
+      }
+
+      /* ---- 2️⃣ generatie filtering (alleen als CSV het zegt) ---- */
+      if (generation) {
+        const genFiltered = baseCandidates.filter(
+          s => s.generation === generation
+        );
+
+        if (genFiltered.length) {
+          baseCandidates = genFiltered;
+        } else {
+          console.warn("⚠ generation specified but no match:", generation);
+          // bewust NIET uitsluiten → baseCandidates blijven geldig
+        }
+      }
+
+      /* ---- 3️⃣ hoogte is voorkeur, geen harde eis ---- */
+      const server =
+        baseCandidates.find(s => s.uHeight === uHeight) ||
+        baseCandidates.find(s => s.uHeight == null) ||
+        baseCandidates[0];
+
+      if (!server) {
+        console.warn("⚠ UNKNOWN (no resolved server)");
+        placeUnknown(slot, rawText, sltag, link);
+        console.groupEnd();
+        continue;
+      }
+
+      /* =====================================================
+         PLACE SERVER
+         ===================================================== */
+
+      clearBlockedSlots(slot);
+
+      setSlot(slot, "serverId", server.id);
+      setSlot(slot, "utilization", DEFAULT_UTIL);
+      setSlot(slot, "unknownLabel", null);
+      setSlot(slot, "sltag", sltag);
+      setSlot(slot, "sltagLink", link);
+
+      blockSlots(slot, server.uHeight ?? uHeight);
+
+      console.log("✅ placed:", server.id);
+      console.groupEnd();
+    }
+
+    console.groupEnd();
+    render();
+  };
+
+  reader.readAsText(file);
+}
+
+
+
+
+/* =========================================================
+   PDU / BANK / PHASE HELPERS
+   ========================================================= */
+
+function getPDUSlotForRack(rackSlot) {
+  if (rackSlot <= 22) return rackSlot;     // 1–22
+  return rackSlot + 4;                     // 27–48
+}
+
+function getBankIndexFromPDUSlot(pduSlot) {
+  if (pduSlot == null) return null;
+  if (pduSlot <= 8)  return 0;
+  if (pduSlot <= 16) return 1;
+  if (pduSlot <= 22) return 2;
+  if (pduSlot <= 32) return 3;
+  if (pduSlot <= 40) return 4;
+  return 5;
+}
+
+function getPhaseIndexFromPDUSlot(pduSlot) {
+  if (pduSlot == null) return null;
+  if (pduSlot <= 16) return 0;
+  if (pduSlot <= 32) return 1;
+  return 2;
+}
+
+function isBankStartFromRack(rackSlot) {
+  let sum = 0;
+  for (let i = 0; i < BANK_SLOTS.length; i++) {
+    const start = sum + 1;
+    sum += BANK_SLOTS[i];
+    if (rackSlot === start) return true;
+    if (rackSlot < sum) return false;
+  }
+  return false;
+}
+
+function isPhaseStartFromRack(rackSlot) {
+  if (rackSlot === 1) return true;
+
+  const cur = getPhaseIndexFromPDUSlot(getPDUSlotForRack(rackSlot));
+  const prev = getPhaseIndexFromPDUSlot(getPDUSlotForRack(rackSlot - 1));
+  return cur !== prev;
+}
+
+function getBankRowspanFromRack(rackSlot) {
+  const idx = getBankIndex(rackSlot);
+  return idx == null ? 0 : BANK_SLOTS[idx];
+}
+
+function getPhaseRowspanFromRack(rackSlot) {
+  const phase = getPhaseIndexFromPDUSlot(getPDUSlotForRack(rackSlot));
+  if (phase == null) return 0;
+
+  let span = PHASE_BANKS[phase]
+    .map(b => BANK_SLOTS[b])
+    .reduce((a, b) => a + b, 0);
+
+  // switch stack correction
+  if (rackSlot < 23 && rackSlot + span >= 23) span += 1;
+  return span;
+}
+
+function getDisplayServer(slot) {
+  const s = appState.slots[slot];
+
+  // 1️⃣ Hoofdrij → toon server
+  if (s?.serverId) {
+    return servers.find(x => x.id === s.serverId);
+  }
+
+  // 2️⃣ Alleen PSU-rijen mogen server-info erven
+  if (!isPSUFeedSlot(slot)) return null;
+
+  const start = findServerStartSlot(slot - 1);
+  if (!start) return null;
+
+  const parent = appState.slots[start];
+  return parent?.serverId
+    ? servers.find(x => x.id === parent.serverId)
+    : null;
+}
+
+
+
+
+function getExtraPSURows(server) {
+  return (server.psuCount / 2) - 1;
+}
+
+
+
+function isPSUFeedSlot(slot) {
+  const self = appState.slots[slot];
+
+  // hoofdrij is NOOIT PSU
+  if (self?.serverId) return false;
+
+  const startSlot = findServerStartSlot(slot - 1);
+  if (!startSlot) return false;
+
+  const parent = appState.slots[startSlot];
+  if (!parent?.serverId || parent.serverId === "__UNKNOWN__") return false;
+
+  const server = servers.find(s => s.id === parent.serverId);
+  if (!server) return false;
+
+  const feeds = server.psuCount / 2;
+  const extraRows = feeds - 1;
+
+  // 👉 bij 2 PSU = extraRows = 0 → nooit true
+  return extraRows > 0 &&
+         slot > startSlot &&
+         slot <= startSlot + extraRows;
+}
+
+
+
+
+
+function findServerStartSlot(slot) {
+  for (let i = slot; i >= 1; i--) {
+    const s = appState.slots[i];
+    if (!s) return null;
+
+    if (s.serverId) return i;   // hoofdrij gevonden
+    // géén serverId = PSU-rij → doorzoeken
+  }
+  return null;
+}
+
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render() {
+
+  /* ---- SLOT LOADS ---- */
+
+  const slotResults = {};
+
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    const s = appState.slots[i];
+    if (!s.utilization) s.utilization = DEFAULT_UTIL;
+
+    const srv = s.serverId && s.serverId !== "__UNKNOWN__"
+      ? servers.find(x => x.id === s.serverId)
+      : null;
+
+    slotResults[i] = srv
+      ? calculateSlot(srv, s.utilization)
+      : null;
+  }
+
+  /* ---- BANK & PHASE TOTALS (PDU based) ---- */
+
+  const banks  = Array(6).fill(0);
+  const phases = Array(3).fill(0);
+
+for (let i = 1; i <= TOTAL_SLOTS; i++) {
+  const s = appState.slots[i];
+  if (!s?.serverId || s.serverId === "__UNKNOWN__") continue;
+
+  const server = servers.find(x => x.id === s.serverId);
+  const calc = slotResults[i];
+  if (!server || !calc) continue;
+
+  const feeds = Math.ceil(server.psuCount / 2);
+  const pdu = getPDUSlotForRack(i);
+  if (!pdu) continue;
+
+  const bankIndex  = getBankIndexFromPDUSlot(pdu);
+  const phaseIndex = getPhaseIndexFromPDUSlot(pdu);
+
+  if (bankIndex != null) {
+    banks[bankIndex] += calc.ampsPerFeed * feeds;
+  }
+
+  if (phaseIndex != null) {
+    phases[phaseIndex] += calc.ampsPerFeed * feeds;
+  }
+}
+
+
+
+  /* ---- BUILD TABLE ---- */
+
+  let rows = "";
+
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+if (isPSUFeedSlot(i)) {
+  const parentSlot = findServerStartSlot(i - 1);
+  const parent = appState.slots[parentSlot];
+  const server = servers.find(s => s.id === parent.serverId);
+  const calc   = slotResults[parentSlot];
+  const pduSlot = getPDUSlotForRack(i);
+
+  if (!server || !calc) continue;
+
+  rows += `
+    <tr class="psu-row">
+      <td>${pduSlot ?? "-"}</td>
+      <td>${i}</td>
+      <td></td>
+      <td><span class="psu-feed">PSU</span></td>
+      <td>—</td>
+      <td>${server.psuCount}</td>
+      <td>${server.psuWatts}</td>
+      <td>${server.voltage}</td>
+      <td>—</td>
+      <td>${calc.ampsPerFeed.toFixed(2)}</td>
+    </tr>
+  `;
+  continue;
+}
+
+
+    if (i === 23) {
+      rows += `
+        <tr class="stack-separator">
+          <td colspan="12" class="stack-label">SWITCH STACK</td>
+        </tr>
+      `;
+    }
+
+    const s = appState.slots[i];
+    const calc = slotResults[i];
+    const displayServer = getDisplayServer(i);
+
+    const pduSlot = getPDUSlotForRack(i);
+    const bankIdx = getBankIndexFromPDUSlot(pduSlot);
+    const phaseIdx = getPhaseIndexFromPDUSlot(pduSlot);
+
+    rows += `
+<tr data-slot="${i}">
+  <td>${pduSlot ?? "-"}</td>
+  <td>${i}</td>
+
+  <td>${s.sltag
+    ? s.sltagLink
+      ? `<a href="${s.sltagLink}" target="_blank" class="sltag-link">${s.sltag}</a>`
+      : s.sltag
+    : "-"}</td>
+
+<td>
+  ${
+    s.occupiedBy
+      ? `<span class="psu-feed">-</span>`
+      : s.serverId === "__UNKNOWN__"
+        ? `<em>Unknown</em>`
+        : `
+          <select data-slot="${i}" data-key="serverId">
+            <option value="">-</option>
+            ${servers.map(x =>
+              `<option value="${x.id}"
+                ${s.serverId===x.id?"selected":""}
+                ${x.blocked?"disabled":""}>
+                ${x.name}
+              </option>`
+            ).join("")}
+          </select>`
+  }
+</td>
+
+
+<td>
+  ${
+    s.occupiedBy || s.serverId === "__UNKNOWN__"
+      ? "—"
+      : `
+        <select data-slot="${i}" data-key="utilization">
+          ${UTIL.map(u =>
+            `<option value="${u}" ${s.utilization===u?"selected":""}>${u}</option>`
+          ).join("")}
+        </select>`
+  }
+</td>
+
+
+  <td>${displayServer?.psuCount ?? "-"}</td>
+  <td>${displayServer?.psuWatts ?? "-"}</td>
+  <td>${displayServer?.voltage ?? "-"}</td>
+  <td>${calc?.totalAmps?.toFixed(2) ?? "-"}</td>
+  <td>${calc?.ampsPerFeed?.toFixed(2) ?? "-"}</td>
+
+  ${isBankStartFromRack(i) && bankIdx!=null ? `
+    <td rowspan="${getBankRowspanFromRack(i)}">${String.fromCharCode(65+bankIdx)}</td>
+    <td rowspan="${getBankRowspanFromRack(i)}"
+        style="background:${gradient(usagePercent(banks[bankIdx], LIMITS.bank))}">
+      ${banks[bankIdx].toFixed(2)} / ${LIMITS.bank}A
+    </td>` : ""}
+
+  ${isPhaseStartFromRack(i) && phaseIdx!=null ? `
+    <td rowspan="${getPhaseRowspanFromRack(i)}">L${phaseIdx+1}</td>
+    <td rowspan="${getPhaseRowspanFromRack(i)}"
+        style="background:${gradient(usagePercent(phases[phaseIdx], LIMITS.phase))}">
+      ${phases[phaseIdx].toFixed(2)} / ${LIMITS.phase}A
+    </td>` : ""}
+</tr>`;
+
+
+
+
+
+
+}
+
+
+  /* -------------------------
+     INJECT HTML
+     ------------------------- */
+
+  document.getElementById("content").innerHTML = `
+    <div class="load-groups">
+      <div class="load-group">
+        <div class="load-summary">${bankBoxes(banks)}</div>
+      </div>
+      <div class="load-group">
+        <div class="load-summary">${phaseBoxes(phases)}</div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <select id="suggestServer">
+        <option value="">– select server –</option>
+        ${servers.map(s =>
+          `<option value="${s.id}" ${s.blocked ? "disabled" : ""}>${s.name}</option>`
+        ).join("")}
+      </select>
+      <button id="suggestSlot">Suggest slot</button>
+    </div>
+
+  <div class="action-bar">
+  <div class="tooltip-wrapper">
+    <button id="importRack">Import rack</button>
+    <div class="tooltip">
+      <strong>How to use CSV Import</strong><br><br>
+      1. Go to <em>IMS Hardware Search</em><br>
+      2. Select Datacenter, Room and Rack<br>
+      3. Select <em>Web server</em> as hardware function<br>
+      3. Export as CSV<br><br>
+      Import the CSV file unchanged.
+    </div>
+  </div>
+
+      <div class="tooltip-wrapper">
+        <button id="resetServers">Reset servers</button>
+        <div class="tooltip">
+          Removes all servers from the rack layout.
+        </div>
+      </div>
+
+      <div class="tooltip-wrapper">
+        <button id="resetUtil">Reset utilization</button>
+        <div class="tooltip">
+          Resets utilization of all servers to <code>normal</code>.
+        </div>
+      </div>
+
+      <input type="file" id="importFile" accept=".csv" hidden>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>PDU Slot</th>
+          <th>Rack Slot</th>
+          <th>SLtag</th>
+          <th>Server</th>
+          <th>Utilization</th>
+          <th>PSU</th>
+          <th>Watts</th>
+          <th>Volt</th>
+          <th>Total Amp</th>
+          <th>Amp / feed</th>
+          <th>Bank</th>
+          <th>Bank Load</th>
+          <th>Phase</th>
+          <th>Phase Load</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  bindUIActions(banks, phases);
+}
+
+
+
+
+
+
+/* =========================================================
+   UI ACTION BINDINGS
+   ========================================================= */
+
+function bindUIActions(banks, phases) {
+
+  /* ---------- SUGGEST SLOT ---------- */
+  const suggestBtn = document.getElementById("suggestSlot");
+  if (suggestBtn) {
+    suggestBtn.onclick = () => {
+      const serverId = document.getElementById("suggestServer")?.value;
+      if (!serverId) {
+        alert("Select a server first");
+        return;
+      }
+
+      const r = suggestBestSlot(serverId, banks, phases);
+      if (!r) {
+        alert("No suitable slot found");
+        return;
+      }
+
+      if (!fitsUHeight(r.slot, r.uHeight)) {
+        showFloatingWarning(r.slot, "Slot below is occupied");
+        return;
+      }
+
+      if (confirm(`Best slot: ${r.slot} (${r.uHeight}U)\n\nPlace in rack?`)) {
+        clearBlockedSlots(r.slot);
+        setSlot(r.slot, "serverId", serverId);
+        setSlot(r.slot, "utilization", DEFAULT_UTIL);
+        setSlot(r.slot, "placedBy", "suggest");
+        blockSlots(r.slot, r.uHeight);
+        render();
+      }
+    };
+  }
+
+  /* ---------- IMPORT CSV ---------- */
+  const importBtn = document.getElementById("importRack");
+  const importFile = document.getElementById("importFile");
+
+  if (importBtn && importFile) {
+    importBtn.onclick = () => importFile.click();
+
+    importFile.onchange = e => {
+      if (e.target.files.length) {
+        importCSV(e.target.files[0]);
+      }
+      e.target.value = "";
+    };
+  }
+
+  /* ---------- RESET BUTTONS ---------- */
+  const resetServersBtn = document.getElementById("resetServers");
+  if (resetServersBtn) {
+    resetServersBtn.onclick = () => resetServers();
+  }
+
+  const resetUtilBtn = document.getElementById("resetUtil");
+  if (resetUtilBtn) {
+    resetUtilBtn.onclick = () => resetUtilization();
+  }
+
+  /* ---------- SLOT DROPDOWNS ---------- */
+  document.querySelectorAll("select[data-slot]").forEach(sel => {
+    sel.onchange = () => {
+      const slot = +sel.dataset.slot;
+      const key  = sel.dataset.key;
+      const val  = sel.value || null;
+
+      /* UTILIZATION */
+      if (key === "utilization") {
+        setSlot(slot, "utilization", val);
+        render();
+        return;
+      }
+
+      /* SERVER */
+      if (key === "serverId") {
+        const server = servers.find(s => s.id === val);
+        const uHeight = server?.uHeight ?? 1;
+
+        if (server && !fitsUHeight(slot, uHeight)) {
+          showFloatingWarning(slot, "Slot below is occupied");
+          sel.value = "";
+          return;
+        }
+
+        clearBlockedSlots(slot);
+        setSlot(slot, "serverId", val);
+
+        if (server) {
+          blockSlots(slot, uHeight);
+        }
+
+        render();
+      }
+    };
+  });
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+/**
+ * Removes all servers from the rack.
+ * Clears placement, blocking, and unknown import labels.
+ * Triggers a full UI re-render.
+ */
+function resetServers() {
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    setSlot(i, "serverId", null);
+    setSlot(i, "utilization", DEFAULT_UTIL); // of null als je dat wilt
+    setSlot(i, "sltag", null);
+    setSlot(i, "placedBy", null);
+    setSlot(i, "occupiedBy", null);
+    setSlot(i, "unknownLabel", null);
+  }
+  render();
+}
+
+/**
+ * Resets utilization level of all slots
+ * back to the default utilization preset.
+ * Triggers a full UI re-render.
+ */
+function resetUtilization() {
+  for (let i = 1; i <= TOTAL_SLOTS; i++) {
+    setSlot(i, "utilization", DEFAULT_UTIL);
+  }
+  render();
+}
+
+/* =========================================================
+   LOAD SUMMARY CARDS (BANKS / PHASES)
+   ========================================================= */
+
+/**
+ * Renders a single load status card.
+ * Color and status are derived from utilization percentage.
+ */
+function statusBox(label, value, limit) {
+  const pct = value / limit;
+
+  let cls = "ok";
+  let text = "OK";
+
+  if (pct >= 1) {
+    cls = "bad";
+    text = "OVERLOAD";
+  } else if (pct >= 0.8) {
+    cls = "warn";
+    text = "WARNING";
+  }
+
+  return `
+    <div class="load-box ${cls}">
+      <div class="load-title">${label}</div>
+      <div class="load-value">${value.toFixed(2)} A</div>
+      <div class="load-status">${text}</div>
+    </div>
+  `;
+}
+
+/**
+ * Builds load summary cards for all banks.
+ */
+const bankBoxes = banks =>
+  BANK_SLOTS.map((_, i) =>
+    statusBox(
+      `Bank ${String.fromCharCode(65 + i)}`,
+      banks[i] ?? 0,
+      LIMITS.bank
+    )
+  ).join("");
+
+/**
+ * Builds load summary cards for all phases.
+ */
+const phaseBoxes = phases =>
+  Array.from({ length: PHASE_COUNT }, (_, i) =>
+    statusBox(
+      `Phase L${i + 1}`,
+      phases[i] ?? 0,
+      LIMITS.phase
+    )
+  ).join("");
+
+/* =========================================================
+   SLOT SUGGESTION LOGIC
+   ========================================================= */
+
+/**
+ * Determines the best available rack slot for a given server,
+ * based on bank and phase load balancing.
+ *
+ * Returns the optimal slot object or null if no safe slot exists.
+ */
+function suggestBestSlot(serverId, banks, phases) {
+  const server = servers.find(s => s.id === serverId);
+  if (!server) return null;
+
+  const uHeight = server.uHeight ?? 1;
+  const ampsPerFeed =
+    calculateSlot(server, DEFAULT_UTIL)?.ampsPerFeed ?? 0;
+
+  let best = null;
+
+  for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
+    if (!fitsUHeight(slot, uHeight)) continue;
+
+    const bankIndex  = Math.floor((slot - 1) / 8);
+    const phaseIndex = Math.floor((slot - 1) / 16);
+
+    const newBankLoad  = (banks[bankIndex]  || 0) + ampsPerFeed;
+    const newPhaseLoad = (phases[phaseIndex] || 0) + ampsPerFeed;
+
+    if (newBankLoad  > LIMITS.bank)  continue;
+    if (newPhaseLoad > LIMITS.phase) continue;
+
+    const score =
+      newBankLoad  / LIMITS.bank +
+      newPhaseLoad / LIMITS.phase;
+
+    if (!best || score < best.score) {
+      best = {
+        slot,
+        bankIndex,
+        phaseIndex,
+        newBank:  newBankLoad,
+        newPhase: newPhaseLoad,
+        ampsPerFeed,
+        uHeight
+      };
+    }
+  }
+
+  return best;
+}
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+/**
+ * Entry point for the Eaton PDU page.
+ *
+ * Loads the shared application layout and performs
+ * the initial render of the rack, load summaries,
+ * and UI bindings.
+ */
+
+
+window.addEventListener("DOMContentLoaded",async()=>{
+  await loadLayout("eaton");
+  render();
+  document.body.classList.add("page-loaded");
+});
+
+</script>
+</body>
+</html>

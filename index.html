@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home</title>
+  <link rel="stylesheet" href="./styles/base.css">
+</head>
+<body>
+
+  <!-- PAGINA-INHOUD -->
+<div id="page-root" class="home">
+
+  <section class="hero">
+    <h1>Rack Power Calculator</h1>
+    <p class="subtitle">
+      Real-world load visibility for modern server racks.
+    </p>
+
+    <div class="hero-badges">
+      <span>✔ Bank Awareness</span>
+      <span>✔ Phase Balancing</span>
+      <span>✔ Overload Prevention</span>
+    </div>
+  </section>
+
+
+  <section class="info-grid">
+
+    <div class="card">
+      <h3>What it does</h3>
+      <p>
+        Calculates <strong>real electrical load</strong> per server and shows how
+        it distributes across <strong>PDU banks and phases</strong>.
+      </p>
+      <ul>
+        <li>Total amperage per server</li>
+        <li>Amperage per feed</li>
+        <li>Bank load</li>
+        <li>Phase load</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>How it calculates</h3>
+      <p>
+        Uses actual server characteristics instead of theoretical peak values.
+      </p>
+      <ul>
+        <li>PSU count</li>
+        <li>PSU wattage</li>
+        <li>Voltage</li>
+        <li>Utilization level</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Why it matters</h3>
+      <p>
+        Breakers trip because of <strong>imbalanced load</strong>, not because
+        of one big server.
+      </p>
+      <ul>
+        <li>Prevent overcurrent</li>
+        <li>Balance phases</li>
+        <li>Plan rack capacity</li>
+        <li>Design resilient layouts</li>
+      </ul>
+    </div>
+
+  </section>
+
+
+  <section class="sections">
+    <h2>Choose your PDU type</h2>
+
+    <div class="section-cards">
+
+      <a href="./pages/eaton.html" class="section-card">
+        <h4>Eaton</h4>
+        <p>Full bank & phase visualization for Eaton PDUs.</p>
+      </a>
+
+      <a href="./pages/apc.html" class="section-card">
+        <h4>APC</h4>
+        <p>Optimized for APC top / bottom bank layouts.</p>
+      </a>
+
+      <a href="./pages/servertech.html" class="section-card">
+        <h4>Servertech</h4>
+        <p>Advanced phase-based load balancing view.</p>
+      </a>
+
+      <a href="./pages/servers.html" class="section-card">
+        <h4>Servers</h4>
+        <p>Manage server models, PSU count, voltage and wattage.</p>
+      </a>
+
+    </div>
+  </section>
+
+
+  <footer class="home-footer">
+    Designed and developed by <strong>@JR</strong> – AMS03
+    
+  </footer>
+
+</div>
+
+
+
+  <script type="module">
+    import { loadLayout } from "./app/layout.js";
+
+    window.addEventListener("DOMContentLoaded", () => {
+      loadLayout("home");
+      document.body.classList.add("page-loaded");
+    });
+  </script>
+
+</body>
+</html>

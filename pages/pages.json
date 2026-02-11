@@ -1,0 +1,26 @@
+
+
+
+
+
+
+
+
+
+
+[
+  { "id": "home", "title": "Home", "path": "/index.html" },
+
+  { "id": "servers", "title": "Servers", "path": "/pages/servers.html" },
+
+
+
+   {
+    "group": "Powerstrips",
+    "items": [
+       { "id": "apc", "title": "APC", "path": "/pages/apc.html" },
+       { "id": "servertech", "title": "ServerTech", "path": "/pages/servertech.html" },
+       { "id": "eaton", "title": "Eaton", "path": "/pages/eaton.html" }
+    ]
+  }
+]
