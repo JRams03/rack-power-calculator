@@ -798,37 +798,41 @@ ${bankStart ? `
   /* -------------------------
      INJECT HTML
      ------------------------- */
-const rackInfoBox = rackMeta.dc
-  ? `
-    <div class="rack-meta">
-      ${rackMeta.dc} – ${rackMeta.sr} – ${rackMeta.rk}
-    </div>
-  `
-  : "";
+const rackInfoBox = `
+  <div class="rack-meta">
+    ${
+      rackMeta.dc
+        ? `${rackMeta.dc} – ${rackMeta.sr} – ${rackMeta.rk}`
+        : `DC: __ - SR: __ - RK: __`
+    }
+  </div>
+`;
+
+
 
 document.getElementById("content").innerHTML = `
  
 
-  <div class="top-bar">
-    ${rackInfoBox}
+<div class="top-bar">
 
-    <div class="top-actions">
-      <div class="load-groups">
-        <div class="load-group">
-          <div class="load-summary">${bankBoxes(banks)}</div>
-        </div>
-        <div class="load-group">
-          <div class="load-summary">${phaseBoxes(phases)}</div>
-        </div>
-      </div>
+  ${rackInfoBox}
 
-      <div class="action-bar">
-        <select id="suggestServer">
-          <option value="">– select server –</option>
-          ${servers.map(s => `<option value="${s.id}">${s.name}</option>`).join("")}
-        </select>
-        <button id="suggestSlot">Suggest slot</button>
-      </div>
+  <div class="action-bar">
+    <select id="suggestServer">
+      <option value="">– select server –</option>
+      ${servers.map(s => `<option value="${s.id}">${s.name}</option>`).join("")}
+    </select>
+    <button id="suggestSlot">Suggest slot</button>
+
+    <button id="importRack">Import rack</button>
+    <button id="resetServers">Reset servers</button>
+    <button id="resetUtil">Reset utilization</button>
+
+    <input type="file" id="importFile" accept=".csv" hidden>
+  </div>
+
+</div>
+
 
 <div class="action-bar">
   <div class="tooltip-wrapper">
