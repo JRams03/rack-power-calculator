@@ -1007,4 +1007,27 @@ aside {
   border: none;
 }
 
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.rack-meta {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: #f3f3f3;
+  border-radius: 4px;
+  color: #333;
+  white-space: nowrap;
+}
+
+.top-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
 
