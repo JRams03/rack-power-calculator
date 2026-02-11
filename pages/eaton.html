@@ -92,6 +92,13 @@ function showFloatingWarning(slot, message) {
   }, 3000);
 }
 
+let rackMeta = {
+  dc: null,
+  sr: null,
+  rk: null
+};
+
+
 /* =========================================================
    BANK & PHASE RESOLUTION
    ========================================================= */
@@ -799,55 +806,79 @@ if (isPSUFeedSlot(i)) {
      INJECT HTML
      ------------------------- */
 
-  document.getElementById("content").innerHTML = `
-    <div class="load-groups">
+const rackInfoBox = `
+  <div class="rack-meta">
+    ${
+      rackMeta.dc
+        ? `${rackMeta.dc} – ${rackMeta.sr} – ${rackMeta.rk}`
+        : `DC: __ - SR: __ - RK: __`
+    }
+  </div>
+`;
+
+
+
+document.getElementById("content").innerHTML = `
+  
+  <div class="load-groups">
       <div class="load-group">
         <div class="load-summary">${bankBoxes(banks)}</div>
       </div>
       <div class="load-group">
         <div class="load-summary">${phaseBoxes(phases)}</div>
       </div>
-    </div>
-
-    <div class="action-bar">
-      <select id="suggestServer">
-        <option value="">– select server –</option>
-        ${servers.map(s =>
-          `<option value="${s.id}" ${s.blocked ? "disabled" : ""}>${s.name}</option>`
-        ).join("")}
-      </select>
-      <button id="suggestSlot">Suggest slot</button>
-    </div>
-
-  <div class="action-bar">
-  <div class="tooltip-wrapper">
-    <button id="importRack">Import rack</button>
-    <div class="tooltip">
-      <strong>How to use CSV Import</strong><br><br>
-      1. Go to <em>IMS Hardware Search</em><br>
-      2. Select Datacenter, Room and Rack<br>
-      3. Select <em>Web server</em> as hardware function<br>
-      3. Export as CSV<br><br>
-      Import the CSV file unchanged.
-    </div>
   </div>
 
-      <div class="tooltip-wrapper">
-        <button id="resetServers">Reset servers</button>
-        <div class="tooltip">
-          Removes all servers from the rack layout.
-        </div>
-      </div>
+<div class="top-bar">
 
-      <div class="tooltip-wrapper">
-        <button id="resetUtil">Reset utilization</button>
-        <div class="tooltip">
-          Resets utilization of all servers to <code>normal</code>.
-        </div>
-      </div>
+  <div class="rack-meta">
+    ${
+      rackMeta.dc
+        ? `${rackMeta.dc} – ${rackMeta.sr} – ${rackMeta.rk}`
+        : `DC: __ – SR: __ – RK: __`
+    }
+  </div>
 
-      <input type="file" id="importFile" accept=".csv" hidden>
+  <div class="action-bar">
+
+    <select id="suggestServer">
+      <option value="">– select server –</option>
+      ${servers.map(s => `<option value="${s.id}">${s.name}</option>`).join("")}
+    </select>
+
+    <button id="suggestSlot">Suggest</button>
+
+    <div class="tooltip-wrapper">
+      <button id="importRack">Import CSV</button>
+      <div class="tooltip">
+        <strong>How to use CSV Import</strong><br><br>
+        1. Go to IMS Hardware Search<br>
+        2. Select Datacenter, Room and Rack<br>
+        3. Select Web server as hardware function<br>
+        4. Export as CSV<br><br>
+        Import the CSV file unchanged.
+      </div>
     </div>
+
+    <div class="tooltip-wrapper">
+      <button id="resetServers">Reset Servers</button>
+      <div class="tooltip">
+        Removes all servers from the rack layout.
+      </div>
+    </div>
+
+    <div class="tooltip-wrapper">
+      <button id="resetUtil">Reset Utilization</button>
+      <div class="tooltip">
+        Resets utilization of all servers to normal.
+      </div>
+    </div>
+
+    <input type="file" id="importFile" accept=".csv" hidden>
+
+  </div>
+
+</div>
 
     <table>
       <thead>
