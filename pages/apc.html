@@ -72,6 +72,13 @@ const RACK_U_SLOTS = [
   39, 41, 43,
 ];
 
+let rackMeta = {
+  dc: null,
+  sr: null,
+  rk: null
+};
+
+
 
 /* =========================================================
    APC CONFIGURATION
@@ -440,12 +447,14 @@ function importCSV(file) {
       const link  = detectLink(rawText);
 
       /* ---- rack-id ---- */
-      const rackMatch = lower.match(/([a-z0-9]+)\.sr/);
-      if (!rackMatch) {
-        console.log("⏭ skipped: no rack id");
-        console.groupEnd();
-        continue;
-      }
+const rackMatch = lower.match(/([a-z0-9]+)\.sr(\d+)\.rk(\d+)/);
+
+if (rackMatch) {
+  rackMeta.dc = rackMatch[1].toUpperCase();   // ams03
+  rackMeta.sr = "SR" + rackMatch[2];          // sr01
+  rackMeta.rk = "RK" + rackMatch[3];          // rk13
+}
+
 
       const rackId = rackMatch[1];
       if (!detectedRackId) detectedRackId = rackId;
@@ -781,13 +790,24 @@ ${bankStart ? `
     `;
   }
 
+
+
   /* -------------------------
      INJECT HTML
      ------------------------- */
+const rackInfoBox = rackMeta.dc
+  ? `
+    <div class="rack-meta">
+      ${rackMeta.dc} – ${rackMeta.sr} – ${rackMeta.rk}
+    </div>
+  `
+  : "";
 
-  document.getElementById("content").innerHTML = `
-   
-    <div class="load-groups">
+document.getElementById("content").innerHTML = `
+  ${rackInfoBox}
+
+  <div class="load-groups">
+
       <div class="load-group">
         <div class="load-summary">${bankBoxes(banks)}</div>
       </div>
