@@ -1001,4 +1001,10 @@ aside {
   letter-spacing: 0.5px;
 }
 
+.rack-meta {
+  background: #1f2937;
+  color: white;
+  border: none;
+}
+
 
