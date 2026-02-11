@@ -991,20 +991,19 @@ aside {
 
 .rack-meta {
   display: inline-block;
-  margin: 0 0 12px 0;
-  padding: 60px 14px;
-  background: #f4f6f8;
-  border: 1px solid #dcdfe3;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 4px 10px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.5px;
+  background: #1f2b3a;
+  color: #fff;
+  border-radius: 4px;
+  line-height: 1.4;
 }
 
-.rack-meta {
-  background: #1f2937;
-  color: white;
-  border: none;
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* niet flex-start */
+  margin-bottom: 18px;
 }
-
 
