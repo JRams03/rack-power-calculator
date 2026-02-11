@@ -141,8 +141,6 @@ function isPhaseStartSlot(slot) {
 /* =========================================================
    RACK → PDU MAPPING
    ========================================================= */
-
-
 /* =========================================================
    COLOR & VISUAL HELPERS
    ========================================================= */
@@ -421,9 +419,8 @@ function importCSV(file) {
       console.log("detected generation:", generation);
       console.log("detected uHeight:", uHeight);
 
-      /* ---- 1️⃣ baseId match (genormaliseerd, NIET generatie-afhankelijk) ---- */
       let baseCandidates = servers.filter(s =>
-        !s.blocked &&                    // ⬅️ BELANGRIJK
+        !s.blocked &&                
         s.baseId &&
         normTxt.includes(normalize(s.baseId))
       );
@@ -441,7 +438,6 @@ function importCSV(file) {
         continue;
       }
 
-      /* ---- 2️⃣ generatie filtering (alleen als CSV het zegt) ---- */
       if (generation) {
         const genFiltered = baseCandidates.filter(
           s => s.generation === generation
@@ -451,11 +447,9 @@ function importCSV(file) {
           baseCandidates = genFiltered;
         } else {
           console.warn("⚠ generation specified but no match:", generation);
-          // bewust NIET uitsluiten → baseCandidates blijven geldig
         }
       }
 
-      /* ---- 3️⃣ hoogte is voorkeur, geen harde eis ---- */
       const server =
         baseCandidates.find(s => s.uHeight === uHeight) ||
         baseCandidates.find(s => s.uHeight == null) ||
@@ -562,12 +556,10 @@ function getPhaseRowspanFromRack(rackSlot) {
 function getDisplayServer(slot) {
   const s = appState.slots[slot];
 
-  // 1️⃣ Hoofdrij → toon server
   if (s?.serverId) {
     return servers.find(x => x.id === s.serverId);
   }
 
-  // 2️⃣ Alleen PSU-rijen mogen server-info erven
   if (!isPSUFeedSlot(slot)) return null;
 
   const start = findServerStartSlot(slot - 1);
@@ -606,7 +598,6 @@ function isPSUFeedSlot(slot) {
   const feeds = server.psuCount / 2;
   const extraRows = feeds - 1;
 
-  // 👉 bij 2 PSU = extraRows = 0 → nooit true
   return extraRows > 0 &&
          slot > startSlot &&
          slot <= startSlot + extraRows;
@@ -621,8 +612,7 @@ function findServerStartSlot(slot) {
     const s = appState.slots[i];
     if (!s) return null;
 
-    if (s.serverId) return i;   // hoofdrij gevonden
-    // géén serverId = PSU-rij → doorzoeken
+    if (s.serverId) return i;  
   }
   return null;
 }
@@ -888,10 +878,6 @@ if (isPSUFeedSlot(i)) {
 
   bindUIActions(banks, phases);
 }
-
-
-
-
 
 
 /* =========================================================
