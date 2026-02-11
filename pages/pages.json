@@ -9,9 +9,9 @@
 
 
 [
-  { "id": "home", "title": "Home", "path": "/index.html" },
+  { "id": "home", "title": "Home", "path": "./index.html" },
 
-  { "id": "servers", "title": "Servers", "path": "/pages/servers.html" },
+  { "id": "servers", "title": "Servers", "path": "./pages/servers.html" },
 
 
 

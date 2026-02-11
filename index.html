@@ -108,14 +108,28 @@
 
 
 
-  <script type="module">
-    import { loadLayout } from "./app/layout.js";
+<script type="module">
+  const BASE_PATH = window.location.hostname.includes("github.io")
+    ? "/rack-power-calculator"   // <-- vervang met jouw repo naam
+    : "";
 
-    window.addEventListener("DOMContentLoaded", () => {
-      loadLayout("home");
-      document.body.classList.add("page-loaded");
+  import { loadLayout } from "./app/layout.js";
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadLayout("home");
+
+    // Fix links dynamisch
+    document.querySelectorAll(".section-card").forEach(a => {
+      const href = a.getAttribute("href");
+      if (href.startsWith("./")) {
+        a.setAttribute("href", `${BASE_PATH}/${href.replace("./","")}`);
+      }
     });
-  </script>
+
+    document.body.classList.add("page-loaded");
+  });
+</script>
+
 
 </body>
 </html>
