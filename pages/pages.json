@@ -18,9 +18,9 @@
    {
     "group": "Powerstrips",
     "items": [
-       { "id": "apc", "title": "APC", "path": "/pages/apc.html" },
-       { "id": "servertech", "title": "ServerTech", "path": "/pages/servertech.html" },
-       { "id": "eaton", "title": "Eaton", "path": "/pages/eaton.html" }
+       { "id": "apc", "title": "APC", "path": "./pages/apc.html" },
+       { "id": "servertech", "title": "ServerTech", "path": "./pages/servertech.html" },
+       { "id": "eaton", "title": "Eaton", "path": "./pages/eaton.html" }
     ]
   }
 ]
