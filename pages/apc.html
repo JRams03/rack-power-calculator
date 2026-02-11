@@ -449,12 +449,15 @@ function importCSV(file) {
       /* ---- rack-id ---- */
 const rackMatch = lower.match(/([a-z0-9]+)\.sr(\d+)\.rk(\d+)/);
 
-if (rackMatch) {
-  rackMeta.dc = rackMatch[1].toUpperCase();   // ams03
-  rackMeta.sr = "SR" + rackMatch[2];          // sr01
-  rackMeta.rk = "RK" + rackMatch[3];          // rk13
+if (!rackMatch) {
+  console.log("⏭ skipped: no rack id");
+  console.groupEnd();
+  continue;
 }
 
+rackMeta.dc = rackMatch[1].toUpperCase();
+rackMeta.sr = "SR" + rackMatch[2];
+rackMeta.rk = "RK" + rackMatch[3];
 
       const rackId = rackMatch[1];
       if (!detectedRackId) detectedRackId = rackId;
@@ -807,7 +810,6 @@ document.getElementById("content").innerHTML = `
   ${rackInfoBox}
 
   <div class="load-groups">
-
       <div class="load-group">
         <div class="load-summary">${bankBoxes(banks)}</div>
       </div>
