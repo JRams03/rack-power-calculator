@@ -1,43 +1,43 @@
-// ========================================
-// BASE PATH (GitHub Pages support)
-// ========================================
-const BASE_PATH = window.location.hostname.includes("github.io")
-  ? "/rack-power-calculator"   // <-- vervang door jouw repo naam
-  : "";
-
-
 export async function loadLayout(activePage) {
 
-  // ========================================
-  // FAVICON
-  // ========================================
+  /* =========================================================
+     BASE PATH (GitHub Pages fix)
+     ========================================================= */
+
+  const BASE_PATH = window.location.hostname.includes("github.io")
+    ? "/rack-power-calculator"
+    : "";
+
+  /* =========================================================
+     FAVICON
+     ========================================================= */
+
   if (!document.querySelector("link[rel='icon']")) {
     const link = document.createElement("link");
     link.rel = "icon";
     link.type = "image/x-icon";
-    link.href = `${BASE_PATH}/favicon.ico`;
+    link.href = BASE_PATH + "/favicon.ico";
     document.head.appendChild(link);
   }
 
-  // ========================================
-  // VERSION
-  // ========================================
-  const APP_VERSION = "v0.5.0";
+  /* =========================================================
+     LOAD NAVIGATION JSON
+     ========================================================= */
 
-  // ========================================
-  // LOAD PAGES.JSON
-  // ========================================
-  const res = await fetch(`${BASE_PATH}/pages/pages.json`);
+  const res = await fetch(BASE_PATH + "/pages/pages.json");
   const pages = await res.json();
+
+  const APP_VERSION = "v0.5.0";
 
   console.log("PAGES.JSON:", pages);
 
-  // ========================================
-  // BUILD NAVIGATION
-  // ========================================
+  /* =========================================================
+     BUILD NAVIGATION
+     ========================================================= */
+
   const navHtml = pages.map(item => {
 
-    // Group
+    // GROUP
     if (item.group && Array.isArray(item.items)) {
       return `
         <div class="nav-divider"></div>
@@ -47,7 +47,6 @@ export async function loadLayout(activePage) {
             ${item.group}
             <span class="chevron">▾</span>
           </button>
-
           <div class="nav-group-items">
             ${item.items.map(p => `
               <a href="${BASE_PATH}/${p.path}" data-page="${p.id}">
@@ -59,7 +58,7 @@ export async function loadLayout(activePage) {
       `;
     }
 
-    // Normal link
+    // SINGLE LINK
     if (item.path) {
       return `
         <a href="${BASE_PATH}/${item.path}" data-page="${item.id}">
@@ -71,13 +70,15 @@ export async function loadLayout(activePage) {
     return "";
   }).join("");
 
+  /* =========================================================
+     WRAP PAGE CONTENT
+     ========================================================= */
+
   const pageContent = document.body.innerHTML;
 
-  // ========================================
-  // INJECT LAYOUT
-  // ========================================
   document.body.innerHTML = `
     <div id="layout">
+
       <header>
         <h1>Rack Power Calculator</h1>
       </header>
@@ -94,26 +95,31 @@ export async function loadLayout(activePage) {
       <main id="content">
         ${pageContent}
       </main>
+
     </div>
   `;
 
-  // ========================================
-  // ACTIVE PAGE HIGHLIGHT
-  // ========================================
+  /* =========================================================
+     ACTIVE PAGE HIGHLIGHT
+     ========================================================= */
+
   document.querySelectorAll("nav a").forEach(a => {
     if (a.dataset.page === activePage) {
       a.classList.add("active");
     }
   });
 
-  // ========================================
-  // COLLAPSE / EXPAND GROUPS
-  // ========================================
+  /* =========================================================
+     COLLAPSE GROUP STATE
+     ========================================================= */
+
   document.querySelectorAll(".nav-group").forEach(group => {
+
     const header = group.querySelector(".nav-group-header");
     const title  = header.textContent.trim();
     const key    = `sidebar.group.${title}`;
 
+    // Restore state
     const saved = sessionStorage.getItem(key);
 
     if (saved === "closed") {
@@ -122,6 +128,7 @@ export async function loadLayout(activePage) {
       group.classList.add("open");
     }
 
+    // Toggle state
     header.onclick = () => {
       group.classList.toggle("open");
 
@@ -131,4 +138,5 @@ export async function loadLayout(activePage) {
       );
     };
   });
+
 }
