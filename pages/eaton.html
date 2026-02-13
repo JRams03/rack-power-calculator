@@ -320,8 +320,8 @@ function importCSV(file) {
   reader.onload = e => {
     const lines = e.target.result.split(/\r?\n/);
 
-    console.group("CSV IMPORT (block based)");
-    console.log("Total raw lines:", lines.length);
+    console.group("CSV IMPORT");
+    
 
     const blocks = [];
     let current = null;

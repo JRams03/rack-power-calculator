@@ -320,7 +320,7 @@ function importCSV(file) {
   reader.onload = e => {
     const lines = e.target.result.split(/\r?\n/);
 
-    console.group("CSV IMPORT (block based)");
+    console.group("CSV IMPORT");
     console.log("Total raw lines:", lines.length);
 
     const blocks = [];
@@ -373,14 +373,12 @@ function importCSV(file) {
 
     if (current) blocks.push(current);
 
-    console.log("Total blocks detected:", blocks.length);
-
     /* =========================================================
        PROCESS BLOCKS
        ========================================================= */
 
     for (const block of blocks) {
-      console.groupCollapsed(`BLOCK slot ${block.slot}`);
+      console.groupCollapsed(`slot ${block.slot}`);
 
       const rawText = block.text;
       const lower   = rawText.toLowerCase();
