@@ -483,7 +483,8 @@ if (rackMatch) {
       setSlot(slot, "sltag", sltag);
       setSlot(slot, "sltagLink", link);
 
-      blockSlots(slot, server.uHeight ?? uHeight);
+      blockSlots(slot, server?.uHeight ?? 1);
+
 
       console.log("✅ placed:", server.id);
       console.groupEnd();
