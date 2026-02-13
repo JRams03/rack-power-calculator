@@ -641,9 +641,7 @@ function render() {
     const s = appState.slots[i];
     if (!s.utilization) s.utilization = DEFAULT_UTIL;
 
-    const srv = s.serverId && s.serverId !== "__UNKNOWN__"
-      ? servers.find(x => x.id === s.serverId)
-      : null;
+ const srv = servers.find(x => x.id == s.serverId);
 
     slotResults[i] = srv
       ? calculateSlot(srv, s.utilization)
