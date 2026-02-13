@@ -84,8 +84,18 @@ export const servers = [
   /* =========================================================
                             LENOVO
    ========================================================= */
- 
-   
+
+
+  {
+    id: "x3550 m5",
+    baseId: "x3550 m5",
+    name: "Lenovo x3550 M5 1U",
+    psuCount: 2,
+    psuWatts: 900,
+    voltage: 230,
+    uHeight: 1,
+    wiki: ""
+  },
   {
     id: "Systemx3250 M6",
     baseId: "systemx3250 m6",
