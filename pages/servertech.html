@@ -940,14 +940,37 @@ function bindUIActions(banks, phases) {
         return;
       }
 
-      if (confirm(`Best slot: ${r.slot} (${r.uHeight}U)\n\nPlace in rack?`)) {
-        clearBlockedSlots(r.slot);
-        setSlot(r.slot, "serverId", serverId);
-        setSlot(r.slot, "utilization", DEFAULT_UTIL);
-        setSlot(r.slot, "placedBy", "suggest");
-        blockSlots(r.slot, r.uHeight);
-        render();
-      }
+if (confirm(`Best slot: ${r.slot} (${r.uHeight}U)\n\nPlace in rack?`)) {
+
+  setSlot(r.slot, "serverId", serverId);
+  setSlot(r.slot, "utilization", DEFAULT_UTIL);
+  setSlot(r.slot, "placedBy", "suggest");
+
+  blockSlots(r.slot, r.uHeight);
+
+  render();
+  highlightSuggestedSlots(r.slot, r.uHeight);
+function highlightSuggestedSlots(startSlot, uHeight) {
+
+  for (let i = 0; i < uHeight; i++) {
+
+    const slotNumber = startSlot + i;
+
+    const el = document.querySelector(`[data-slot="${slotNumber}"]`);
+
+    if (!el) continue;
+
+    el.classList.add("suggest-highlight");
+
+    // Verwijder class na animatie
+    setTimeout(() => {
+      el.classList.remove("suggest-highlight");
+    }, 5000);
+  }
+}
+
+}
+
     };
   }
 
@@ -1116,6 +1139,22 @@ const phaseBoxes = phases =>
  * Returns the optimal slot object or null if no safe slot exists.
  */
 function suggestBestSlot(serverId, banks, phases) {
+
+  const bankRanges = [
+    { name: "A", start: 1,  end: 8  },
+    { name: "B", start: 9,  end: 16 },
+    { name: "C", start: 17, end: 22 },
+    { name: "D", start: 23, end: 28 },
+    { name: "E", start: 29, end: 36 },
+    { name: "F", start: 37, end: 44 }
+  ];
+
+  function getBankIndex(slot) {
+    return bankRanges.findIndex(
+      b => slot >= b.start && slot <= b.end
+    );
+  }
+
   const server = servers.find(s => s.id === serverId);
   if (!server) return null;
 
@@ -1123,39 +1162,111 @@ function suggestBestSlot(serverId, banks, phases) {
   const ampsPerFeed =
     calculateSlot(server, DEFAULT_UTIL)?.ampsPerFeed ?? 0;
 
+  const BANK_LIMIT  = 6.5;
+  const PHASE_LIMIT = 13;
+
+  const minStartSlotByHeight = {
+    1: 1,
+    2: 17,
+    4: 23
+  };
+
+  const minStart = minStartSlotByHeight[uHeight] ?? 1;
+
   let best = null;
 
-  for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
-    if (!fitsUHeight(slot, uHeight)) continue;
+  let rejectionStats = {
+    physical: 0,
+    bankLimit: 0,
+    phaseLimit: 0
+  };
 
-    const bankIndex  = Math.floor((slot - 1) / 8);
+  for (let slot = minStart; slot <= TOTAL_SLOTS; slot++) {
+
+    const endSlot = slot + uHeight - 1;
+
+    if (endSlot > TOTAL_SLOTS || !fitsUHeight(slot, uHeight)) {
+      rejectionStats.physical++;
+      continue;
+    }
+
+    const bankIndex  = getBankIndex(slot);
     const phaseIndex = Math.floor((slot - 1) / 16);
 
     const newBankLoad  = (banks[bankIndex]  || 0) + ampsPerFeed;
     const newPhaseLoad = (phases[phaseIndex] || 0) + ampsPerFeed;
 
-    if (newBankLoad  > LIMITS.bank)  continue;
-    if (newPhaseLoad > LIMITS.phase) continue;
+    if (newBankLoad > BANK_LIMIT) {
+      rejectionStats.bankLimit++;
+      continue;
+    }
 
-    const score =
-      newBankLoad  / LIMITS.bank +
-      newPhaseLoad / LIMITS.phase;
+    if (newPhaseLoad > PHASE_LIMIT) {
+      rejectionStats.phaseLimit++;
+      continue;
+    }
+
+    const bankRatio  = newBankLoad  / BANK_LIMIT;
+    const phaseRatio = newPhaseLoad / PHASE_LIMIT;
+
+    const loadScore = bankRatio + phaseRatio;
+
+    const isBankStart =
+      slot === bankRanges[bankIndex].start;
+
+    let bankStartBonus = 0;
+
+    if (isBankStart) {
+      if (uHeight === 4) bankStartBonus = -0.35;
+      if (uHeight === 2) bankStartBonus = -0.18;
+    }
+
+    const positionBias = (slot / TOTAL_SLOTS) * 0.04;
+
+    const score = loadScore + positionBias + bankStartBonus;
 
     if (!best || score < best.score) {
       best = {
         slot,
+        uHeight,
         bankIndex,
         phaseIndex,
-        newBank:  newBankLoad,
-        newPhase: newPhaseLoad,
-        ampsPerFeed,
-        uHeight
+        newBankLoad,
+        newPhaseLoad,
+        score,
+        loadScore,
+        bankStartBonus,
+        positionBias
       };
     }
   }
 
+  /* ==============================
+     DECISION LOGGING
+  =============================== */
+
+  if (best) {
+    console.log("✔ Server placement decision");
+    console.log(`→ Slot chosen: ${best.slot}`);
+    console.log(`→ Bank: ${bankRanges[best.bankIndex].name}`);
+    console.log(`→ Bank load after placement: ${best.newBankLoad.toFixed(2)}A / ${BANK_LIMIT}A`);
+    console.log(`→ Phase load after placement: ${best.newPhaseLoad.toFixed(2)}A / ${PHASE_LIMIT}A`);
+    console.log(`→ Load score: ${best.loadScore.toFixed(3)}`);
+    if (best.bankStartBonus < 0) {
+      console.log("→ Bank start bonus applied");
+    }
+    console.log(`→ Final score: ${best.score.toFixed(3)}`);
+  } else {
+    console.log("❌ No suitable slot found");
+    console.log("Reasons:");
+    console.log(`- Physical conflicts: ${rejectionStats.physical}`);
+    console.log(`- Bank limit exceeded: ${rejectionStats.bankLimit}`);
+    console.log(`- Phase limit exceeded: ${rejectionStats.phaseLimit}`);
+  }
+
   return best;
 }
+
 
 
 /* =========================================================

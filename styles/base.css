@@ -350,18 +350,33 @@ button:focus{
    SUGGESTED PLACEMENT (via slot suggestie)
    ========================================================= */
 
-tr.placed-suggest td{
+tr.placed-suggest td:nth-child(-n+10){
   background:#e1f4f5;
 }
 
-
-
-.placed-import {
+.placed-import td:nth-child(-n+10){
   background: #edfff2;          
 }
 
-.placed-import select {
+.placed-import select td:nth-child(-n+10){
   background-color: transparent;
+}
+
+/* Highlight voor suggest placement */
+.suggest-highlight td:nth-child(-n+10){
+  animation: suggestFade 5s ease forwards;
+}
+
+@keyframes suggestFade {
+  0% {
+    background-color: rgba(100, 180, 255, 0.45);
+  }
+  50% {
+    background-color: rgba(100, 180, 255, 0.45);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 
