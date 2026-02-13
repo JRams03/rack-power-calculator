@@ -687,10 +687,13 @@ for (let i = 1; i <= TOTAL_SLOTS; i++) {
 
   for (let i = 1; i <= TOTAL_SLOTS; i++) {
 if (isPSUFeedSlot(i)) {
-  const parent = appState.slots[parentSlot];
-if (parent?.serverId === "__UNKNOWN__") continue;
 
   const parentSlot = findServerStartSlot(i - 1);
+  if (!parentSlot) continue;
+
+  const parent = appState.slots[parentSlot];
+  if (parent?.serverId === "__UNKNOWN__") continue;
+
   const server = servers.find(s => s.id === parent.serverId);
   const calc   = slotResults[parentSlot];
   const pduSlot = getPDUSlotForRack(i);
@@ -711,8 +714,10 @@ if (parent?.serverId === "__UNKNOWN__") continue;
       <td>${calc.ampsPerFeed.toFixed(2)}</td>
     </tr>
   `;
+
   continue;
 }
+
 
 
     if (i === 23) {
