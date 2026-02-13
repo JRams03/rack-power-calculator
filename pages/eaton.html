@@ -599,10 +599,11 @@ function isPSUFeedSlot(slot) {
   if (!startSlot) return false;
 
   const parent = appState.slots[startSlot];
-  if (!parent?.serverId || parent.serverId === "__UNKNOWN__") return false;
+  if (!parent?.serverId) return false;
 
-  const server = servers.find(s => s.id === parent.serverId);
-  if (!server) return false;
+const server = servers.find(s => s.id === parent.serverId);
+if (!server) return false;   // unknown valt hier al uit
+
 
   const feeds = server.psuCount / 2;
   const extraRows = feeds - 1;
@@ -686,8 +687,10 @@ for (let i = 1; i <= TOTAL_SLOTS; i++) {
 
   for (let i = 1; i <= TOTAL_SLOTS; i++) {
 if (isPSUFeedSlot(i)) {
-  const parentSlot = findServerStartSlot(i - 1);
   const parent = appState.slots[parentSlot];
+if (parent?.serverId === "__UNKNOWN__") continue;
+
+  const parentSlot = findServerStartSlot(i - 1);
   const server = servers.find(s => s.id === parent.serverId);
   const calc   = slotResults[parentSlot];
   const pduSlot = getPDUSlotForRack(i);
