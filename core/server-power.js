@@ -1,6 +1,7 @@
-import { MOTHERBOARDS } from "/data/motherboards.js";
-import { CPUS } from "/data/cpus.js";
-import { GPUS } from "/data/gpus.js";
+import { MOTHERBOARDS } from "../data/motherboards.js";
+import { CPUS } from "../data/cpus.js";
+import { GPUS } from "../data/gpus.js";
+
 
 export function initServerPower() {
 
