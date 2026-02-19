@@ -1,16 +1,22 @@
 export async function loadLayout(activePage) {
 
-  /* =========================================================
-     BASE PATH (GitHub Pages fix)
-     ========================================================= */
+  /* =========================================
+     BASE PATH (GitHub Pages safe)
+  ========================================== */
 
   const BASE_PATH = window.location.hostname.includes("github.io")
     ? "/rack-power-calculator"
     : "";
 
-  /* =========================================================
-     FAVICON
-     ========================================================= */
+  /* =========================================
+     Reset fade state
+  ========================================== */
+
+  document.body.classList.remove("page-loaded");
+
+  /* =========================================
+     Favicon
+  ========================================== */
 
   if (!document.querySelector("link[rel='icon']")) {
     const link = document.createElement("link");
@@ -20,28 +26,24 @@ export async function loadLayout(activePage) {
     document.head.appendChild(link);
   }
 
-  /* =========================================================
-     LOAD NAVIGATION JSON
-     ========================================================= */
+  /* =========================================
+     Load Navigation JSON
+  ========================================== */
 
   const res = await fetch(BASE_PATH + "/pages/pages.json");
   const pages = await res.json();
 
   const APP_VERSION = "v0.5.0";
 
-  console.log("PAGES.JSON:", pages);
-
-  /* =========================================================
-     BUILD NAVIGATION
-     ========================================================= */
+  /* =========================================
+     Build Navigation
+  ========================================== */
 
   const navHtml = pages.map(item => {
 
-    // GROUP
     if (item.group && Array.isArray(item.items)) {
       return `
         <div class="nav-divider"></div>
-
         <div class="nav-group open">
           <button class="nav-group-header">
             ${item.group}
@@ -58,7 +60,6 @@ export async function loadLayout(activePage) {
       `;
     }
 
-    // SINGLE LINK
     if (item.path) {
       return `
         <a href="${BASE_PATH}/${item.path}" data-page="${item.id}">
@@ -68,19 +69,46 @@ export async function loadLayout(activePage) {
     }
 
     return "";
+
   }).join("");
 
-  /* =========================================================
-     WRAP PAGE CONTENT
-     ========================================================= */
+  /* =========================================
+     Capture Original Page Content
+  ========================================== */
 
   const pageContent = document.body.innerHTML;
+
+  /* =========================================
+     Determine Active Page Title
+  ========================================== */
+
+  let activeTitle = "Rack Power Calculator";
+
+  pages.forEach(item => {
+
+    if (item.path && item.id === activePage) {
+      activeTitle = item.title;
+    }
+
+    if (item.group && Array.isArray(item.items)) {
+      item.items.forEach(p => {
+        if (p.id === activePage) {
+          activeTitle = p.title;
+        }
+      });
+    }
+
+  });
+
+  /* =========================================
+     Inject Layout
+  ========================================== */
 
   document.body.innerHTML = `
     <div id="layout">
 
       <header>
-        <h1>Rack Power Calculator</h1>
+        <h1>${activeTitle}</h1>
       </header>
 
       <aside>
@@ -99,9 +127,9 @@ export async function loadLayout(activePage) {
     </div>
   `;
 
-  /* =========================================================
-     ACTIVE PAGE HIGHLIGHT
-     ========================================================= */
+  /* =========================================
+     Highlight Active Page
+  ========================================== */
 
   document.querySelectorAll("nav a").forEach(a => {
     if (a.dataset.page === activePage) {
@@ -109,9 +137,9 @@ export async function loadLayout(activePage) {
     }
   });
 
-  /* =========================================================
-     COLLAPSE GROUP STATE
-     ========================================================= */
+  /* =========================================
+     Collapse / Expand Groups
+  ========================================== */
 
   document.querySelectorAll(".nav-group").forEach(group => {
 
@@ -119,7 +147,6 @@ export async function loadLayout(activePage) {
     const title  = header.textContent.trim();
     const key    = `sidebar.group.${title}`;
 
-    // Restore state
     const saved = sessionStorage.getItem(key);
 
     if (saved === "closed") {
@@ -128,7 +155,6 @@ export async function loadLayout(activePage) {
       group.classList.add("open");
     }
 
-    // Toggle state
     header.onclick = () => {
       group.classList.toggle("open");
 
@@ -137,6 +163,14 @@ export async function loadLayout(activePage) {
         group.classList.contains("open") ? "open" : "closed"
       );
     };
+
   });
 
+  /* =========================================
+     Fade In
+  ========================================== */
+
+  requestAnimationFrame(() => {
+    document.body.classList.add("page-loaded");
+  });
 }
