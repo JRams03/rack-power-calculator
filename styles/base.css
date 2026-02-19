@@ -38,6 +38,8 @@ header{
   border-bottom:1px solid #1a1a1a;
 }
 
+
+
 /* ===== Main ===== */
 
 main{
@@ -248,9 +250,11 @@ tbody td{
 
 /* Hover */
 
-tbody tr:hover td{
+tbody tr:hover td:nth-child(-n+10){
   background:#eef0ee;
 }
+
+
 
 /* =========================================================
    FIXED COLUMN WIDTHS
@@ -378,6 +382,7 @@ tr.placed-suggest td:nth-child(-n+10){
     background-color: transparent;
   }
 }
+
 
 
 /* =========================================================
@@ -684,7 +689,7 @@ aside nav a:active{
 .nav-group{
   margin-bottom: 14px;
   padding-bottom: 1px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: none;
 }
 
 /* Group header button */
@@ -783,7 +788,7 @@ td.sltag {
 /* ===== Sidebar divider ===== */
 
 .nav-divider {
-  margin: 22px 0;
+  margin: 10px 0;
   height: 1px;
   background: #5a5c5b;
   opacity: 0.6;
@@ -1021,7 +1026,28 @@ aside {
   margin: 0 auto 20px;
 
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+}
+
+.top-left {
+  display: flex;
+  align-items: center;
+}
+
+
+
+.rack-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rack-selector select {
+  height: 28px;
+}
+
+.rack-selector button {
+  height: 30px;
 }
 

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Server Power Calculator</title>
+
+  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/server-power.css">
+</head>
+
+<body>
+
+    <div class="wip-banner">
+  WORK IN PROGRESS
+</div>
+
+
+<div class="calculator">
+
+  <!-- ========================= -->
+  <!-- Motherboard -->
+  <!-- ========================= -->
+
+  <div class="row">
+    <label>Motherboard</label>
+    <select id="motherboard"></select>
+  </div>
+
+  <!-- ========================= -->
+  <!-- CPU -->
+  <!-- ========================= -->
+
+<div class="row">
+  <label>CPU</label>
+  <select id="cpu"></select>
+</div>
+
+<div class="cpu-info">
+  <div><strong>Cores:</strong> <span id="cpuCores">-</span></div>
+  <div><strong>TDP:</strong> <span id="cpuTdp">-</span> W</div>
+  <div><strong>Generation:</strong> <span id="cpuGen">-</span></div>
+  <div><strong>Socket:</strong> <span id="cpuSocket">-</span></div>
+</div>
+
+
+  <!-- ========================= -->
+  <!-- RAM -->
+  <!-- ========================= -->
+
+  <div class="row">
+    <label>RAM</label>
+    <select id="ramType"></select>
+    <input type="number" id="ramCount" value="0" min="0">
+  </div>
+
+  <!-- ========================= -->
+  <!-- Drives -->
+  <!-- ========================= -->
+
+  <div class="row">
+    <label>Drives</label>
+
+    <div class="drive-container" id="driveContainer">
+      <div class="drive-row">
+        <select class="driveType">
+          <option value="5">SATA SSD</option>
+          <option value="8">SED SSD</option>
+          <option value="12">NVMe</option>
+          <option value="10">3.5 HDD</option>
+        </select>
+        <input type="number" class="driveCount" value="0" min="0">
+      </div>
+    </div>
+
+    <button type="button" id="addDrive">+</button>
+  </div>
+
+  <!-- ========================= -->
+  <!-- GPU -->
+  <!-- ========================= -->
+
+  <div class="row">
+    <label>GPU</label>
+    <select id="gpu"></select>
+    <input type="number" id="gpuCount" value="0" min="0">
+  </div>
+
+  <div class="gpu-info">
+    <div><strong>VRAM:</strong> <span id="gpuVram">-</span></div>
+    <div><strong>TDP:</strong> <span id="gpuTdp">-</span> W</div>
+    <div><strong>Generation:</strong> <span id="gpuGen">-</span></div>
+  </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- Results -->
+<!-- ========================= -->
+
+<div class="results">
+
+  <div class="result-row">
+    <span>Motherboard Power</span>
+    <span id="moboPower">0</span>
+    <span> W</span>
+  </div>
+
+  <div class="result-row">
+    <span>CPU Power</span>
+    <span id="cpuPowerTotal">0</span>
+    <span> W</span>
+  </div>
+
+  <div class="result-row">
+    <span>RAM Power</span>
+    <span id="ramPowerTotal">0</span>
+    <span> W</span>
+  </div>
+
+  <div class="result-row">
+    <span>Drive Power</span>
+    <span id="drivePowerTotal">0</span>
+    <span> W</span>
+  </div>
+
+  <div class="result-row">
+    <span>GPU Power</span>
+    <span id="gpuPowerTotal">0</span>
+    <span> W</span>
+  </div>
+
+  <div class="result-row total">
+    <span>Total Server Power</span>
+    <span id="totalPower">0</span>
+    <span> W</span>
+  </div>
+
+</div>
+
+
+<!-- ========================= -->
+<!-- Scripts -->
+<!-- ========================= -->
+
+<script type="module">
+  import { loadLayout } from "/app/layout.js";
+  import { initServerPower } from "/core/server-power.js";
+
+  async function init() {
+    await loadLayout("server");
+    requestAnimationFrame(() => {
+      initServerPower();
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>

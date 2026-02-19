@@ -9,17 +9,25 @@
 
 
 [
-  { "id": "home", "title": "Home", "path": "index.html" },
+  { "id": "home", "title": "Home", "path": "/index.html" },
 
-  { "id": "servers", "title": "Servers", "path": "pages/servers.html" },
+  { "id": "servers", "title": "Servers", "path": "/pages/servers.html" },
 
-  {
+   {
+    "group": "Calculators",
+    "items": [
+      { "id": "server", "title": "Server Power Calculator", "path": "/pages/server-power-calculator.html" }
+    ]
+  },
+
+
+
+   {
     "group": "Powerstrips",
     "items": [
-      { "id": "apc", "title": "APC", "path": "pages/apc.html" },
-      { "id": "servertech", "title": "ServerTech", "path": "pages/servertech.html" },
-      { "id": "eaton", "title": "Eaton", "path": "pages/eaton.html" }
+       { "id": "apc", "title": "APC", "path": "/pages/apc.html" },
+       { "id": "servertech", "title": "ServerTech", "path": "/pages/servertech.html" },
+       { "id": "eaton", "title": "Eaton", "path": "/pages/eaton.html" }
     ]
   }
 ]
-
