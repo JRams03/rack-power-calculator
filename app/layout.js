@@ -118,7 +118,7 @@ export async function loadLayout(activePage) {
         <div class="header-disclaimer">
           <div>Values shown are estimates for planning purposes only.</div>
           <div>Always verify with official documentation and real measurements.</div>
-          <div>Found something incorrect? Contact me on Slack.</div>
+          <div>Found something incorrect? Contact me on Slack. @JR </div>
         </div>
 
         </header>
