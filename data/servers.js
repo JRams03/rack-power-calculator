@@ -329,7 +329,7 @@ export const servers = [
     baseId: "x11dpu",
     name: "Supermicro X11DPU 1U",
     psuCount: 2,
-    psuWatts: 1200,
+    psuWatts: 750,
     voltage: 230,
     uHeight: 1,
     wiki: "https://pages.github.ibm.com/iaas-dcops/sliki/Hardware/Motherboards/X11DPU+"
@@ -339,7 +339,7 @@ export const servers = [
     baseId: "x11dpu",
     name: "Supermicro X11DPU 2U",
     psuCount: 2,
-    psuWatts: 1200,
+    psuWatts: 1000,
     voltage: 230,
     uHeight: 2,
     wiki: "https://pages.github.ibm.com/iaas-dcops/sliki/Hardware/Motherboards/X11DPU+"

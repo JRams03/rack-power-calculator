@@ -18,52 +18,56 @@
 
 <div class="calculator">
 
-  <!-- ========================= -->
-  <!-- Motherboard -->
-  <!-- ========================= -->
-
+  <!-- Manufacturer -->
   <div class="row">
-    <label>Motherboard</label>
-    <select id="motherboard"></select>
+    <label>Manufacturer</label>
+    <select id="manufacturer" required>
+      <option value="" disabled selected hidden>Select Manufacturer</option>
+      <option value="Supermicro">Supermicro</option>
+      <option value="Lenovo">Lenovo</option>
+    </select>
   </div>
 
-  <!-- ========================= -->
+  <!-- Motherboard -->
+  <div class="row">
+    <label>Motherboard</label>
+    <select id="motherboard" required>
+      <option value="" disabled selected hidden>Select Motherboard</option>
+    </select>
+  </div>
+
   <!-- CPU -->
-  <!-- ========================= -->
+  <div class="row">
+    <label>CPU</label>
+    <select id="cpu" required>
+      <option value="" disabled selected hidden>Select CPU</option>
+    </select>
+  </div>
 
-<div class="row">
-  <label>CPU</label>
-  <select id="cpu"></select>
-</div>
+  <div class="cpu-info">
+    <div><strong>Cores:</strong> <span id="cpuCores">-</span></div>
+    <div><strong>TDP:</strong> <span id="cpuTdp">-</span> W</div>
+    <div><strong>Generation:</strong> <span id="cpuGen">-</span></div>
+    <div><strong>Socket:</strong> <span id="cpuSocket">-</span></div>
+  </div>
 
-<div class="cpu-info">
-  <div><strong>Cores:</strong> <span id="cpuCores">-</span></div>
-  <div><strong>TDP:</strong> <span id="cpuTdp">-</span> W</div>
-  <div><strong>Generation:</strong> <span id="cpuGen">-</span></div>
-  <div><strong>Socket:</strong> <span id="cpuSocket">-</span></div>
-</div>
-
-
-  <!-- ========================= -->
   <!-- RAM -->
-  <!-- ========================= -->
-
   <div class="row">
     <label>RAM</label>
-    <select id="ramType"></select>
+    <select id="ramType" required>
+      <option value="" disabled selected hidden>Select RAM Type</option>
+    </select>
     <input type="number" id="ramCount" value="0" min="0">
   </div>
 
-  <!-- ========================= -->
   <!-- Drives -->
-  <!-- ========================= -->
-
   <div class="row">
     <label>Drives</label>
 
     <div class="drive-container" id="driveContainer">
       <div class="drive-row">
-        <select class="driveType">
+        <select class="driveType" required>
+          <option value="" disabled selected hidden>Select Drive</option>
           <option value="5">SATA SSD</option>
           <option value="8">SED SSD</option>
           <option value="12">NVMe</option>
@@ -76,13 +80,12 @@
     <button type="button" id="addDrive">+</button>
   </div>
 
-  <!-- ========================= -->
   <!-- GPU -->
-  <!-- ========================= -->
-
   <div class="row">
     <label>GPU</label>
-    <select id="gpu"></select>
+    <select id="gpu">
+      <option value="" disabled selected hidden>Choose GPU (if applicable)</option>
+    </select>
     <input type="number" id="gpuCount" value="0" min="0">
   </div>
 
@@ -93,7 +96,6 @@
   </div>
 
 </div>
-
 
 <!-- ========================= -->
 <!-- Results -->
@@ -137,7 +139,25 @@
     <span> W</span>
   </div>
 
+  <div class="result-row">
+    <span>Amp Draw</span>
+    <span id="ampDraw">0</span>
+    <span>A</span>
+  </div>
+
+  <div class="row">
+  <label>Input Voltage</label>
+  <select id="voltage">
+    <option value="230" selected>230V</option>
+    <option value="208">208V</option>
+    <option value="120">120V</option>
+  </select>
 </div>
+
+
+
+</div>
+
 
 
 <!-- ========================= -->

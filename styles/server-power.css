@@ -248,3 +248,24 @@ main {
 
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
+
+/* ===============================
+   Highlight
+   =============================== */
+
+.row select:hover,
+.row input[type="number"]:hover {
+  border-color: #494949;
+  background: #d4d4d4;
+  cursor: pointer;
+}
+
+.row input[type="number"]:hover {
+  cursor: text;
+}
+
+
+
+.result-row:hover {
+  background: #cfcfcf;
+}
