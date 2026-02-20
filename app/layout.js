@@ -111,7 +111,6 @@ export async function loadLayout(activePage) {
         <h1>${activeTitle}</h1>
 
           <div class="header-disclaimer">
-            <strong>Planning Tool – Estimated Values</strong>
             <span>
               Values shown are estimates for planning purposes only.
               Always verify with official documentation and real measurements.
