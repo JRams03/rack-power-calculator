@@ -1,4 +1,33 @@
+
+
+
+
+
+
 export async function loadLayout(activePage) {
+
+  /* =========================================
+     GOOGLE ANALYTICS
+  ========================================== */
+
+  const GA_ID = "G-L0J7RTR14Z 
+
+  if (!window.gtag) {
+
+    const script1 = document.createElement("script");
+    script1.async = true;
+    script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    document.head.appendChild(script1);
+
+    const script2 = document.createElement("script");
+    script2.innerHTML = `
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '${GA_ID}');
+    `;
+    document.head.appendChild(script2);
+  }
 
   /* =========================================
      BASE PATH (GitHub Pages safe)
@@ -180,4 +209,11 @@ export async function loadLayout(activePage) {
   requestAnimationFrame(() => {
     document.body.classList.add("page-loaded");
   });
+
+  if (window.gtag) {
+  gtag('config', GA_ID, {
+    page_path: window.location.pathname,
+  });
+}
+
 }
