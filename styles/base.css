@@ -1051,3 +1051,25 @@ aside {
   height: 30px;
 }
 
+/* disclaimer banner*/
+
+.header-disclaimer {
+  position: absolute;
+  right: 20px;
+  top: 12px;
+
+  max-width: 520px;
+
+  font-size: 12px;
+  line-height: 1.3;
+
+  color: #d0d0d0;
+  text-align: right;
+}
+
+.header-disclaimer strong {
+  display: block;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 2px;
+}

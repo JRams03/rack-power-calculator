@@ -109,7 +109,16 @@ export async function loadLayout(activePage) {
 
       <header>
         <h1>${activeTitle}</h1>
-      </header>
+
+          <div class="header-disclaimer">
+            <strong>Planning Tool – Estimated Values</strong>
+            <span>
+              Values shown are estimates for planning purposes only.
+              Always verify with official documentation and real measurements.
+              Found something incorrect? Contact me on Slack. @JR
+            </span>
+          </div>
+        </header>
 
       <aside>
         <nav>${navHtml}</nav>
