@@ -688,7 +688,12 @@ function renderRooms() {
       (!filters.driveGeneric || resolveDriveEntries(s.drives).map(e => buildDriveLabel(e)).includes(filters.driveGeneric)) &&
       (!filters.drives || extractHardwareModels(s.drives).includes(filters.drives)) &&
       (!filters.height || height === filters.height) &&
-      (activeStatusFilters.size === 0 ||activeStatusFilters.has((s.status || "").toUpperCase().replace(/\s+/g, "_"))) === activeStatusFilter)
+      (
+  activeStatusFilters.size === 0 ||
+  activeStatusFilters.has(
+    (s.status || "").toUpperCase().replace(/\s+/g, "_")
+  )
+  ))
     
   });
 
@@ -1337,7 +1342,8 @@ if (activeStatusFilters.has(clickedStatus)) {
   activeStatusFilters.add(clickedStatus);
 }
 
-    renderRooms(); // alles opnieuw renderen
+renderRooms();
+
   };
 });
 }
