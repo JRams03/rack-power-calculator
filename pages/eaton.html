@@ -1301,9 +1301,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await loadLayout("eaton");
 
+  // 🔹 Eerst renderen zodat slots worden opgebouwd
+  render();
+
   /* ==========================================
-     AUTO LOAD RACK FROM SERVERROOM EXPLORER
-     ========================================== */
+     AUTO LOAD RACK
+  ========================================== */
 
   const urlParams = new URLSearchParams(window.location.search);
   const rackFromUrl = urlParams.get("rack");
@@ -1319,9 +1322,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const rackData = JSON.parse(rackDataRaw);
 
-      // reset state
-      appState.slots = {};
-
       rackData.forEach(server => {
 
         if (!server.slot) return;
@@ -1334,13 +1334,16 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         if (!profile) return;
 
-        setSlot(server.slot, profile.id);
+        setSlot(server.slot, "serverId", profile.id);
+        setSlot(server.slot, "utilization", DEFAULT_UTIL);
+
+        blockSlots(server.slot, profile.uHeight ?? 1);
       });
+
+      // 🔥 nu opnieuw renderen met data
+      render();
     }
   }
-
-  // 🔥 Nu pas renderen
-  render();
 
   document.body.classList.add("page-loaded");
 });
