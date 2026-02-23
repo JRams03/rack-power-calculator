@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Server Room Explorer</title>
+
+  <!-- Base styling -->
+  <link rel="stylesheet" href="../styles/base.css">
+
+  <!-- Explorer specific styling -->
+  <link rel="stylesheet" href="../styles/serverroomexplorer.css">
+
+  <!-- CSV parser -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+
+<script type="module">
+
+import { loadLayout } from "../app/layout.js";
+import { servers as SERVER_PROFILES } from "../data/servers.js";
+import { calculateRack } from "../core/eatonCalculator.js";
+import { DRIVE_CATALOG } from "../data/drives.js";
+import { analyzeRack, calculateRackPenalty } from "../core/rackAnalysis.js";
+import { suggestBestPlacement } from "../core/placementAdvisor.js";
+import { suggestBestSlot } from "../core/slotAdvisor.js";
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadLayout("serverroom");
+
+  document.getElementById("content").innerHTML = `
+
+<!-- =========================
+     DATA & SEARCH
+========================= -->
+<div class="control-group">
+  <div class="control-title">Data & Search</div>
+  <div class="control-row">
+
+    <input type="file" id="csvInput" accept=".csv">
+
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search hostname / account"
+    >
+
+  </div>
+</div>
+
+<!-- =========================
+     HARDWARE FILTERS
+========================= -->
+<div class="control-group">
+  <div class="control-title">Hardware Filters</div>
+  <div class="control-row">
+
+    <select id="filterBoard">
+      <option value="">Motherboard</option>
+    </select>
+
+    <select id="filterHeight">
+      <option value="">Height</option>
+    </select>
+
+    <select id="filterCpu">
+      <option value="">CPU</option>
+    </select>
+
+    <select id="filterRam">
+      <option value="">RAM</option>
+    </select>
+
+    <select id="filterController">
+      <option value="">Controller</option>
+    </select>
+
+    <select id="filterDriveGeneric">
+      <option value="">Drive Type</option>
+    </select>
+
+    <select id="filterDrives">
+      <option value="">Drive Model</option>
+    </select>
+
+    <button id="clearFilters">Clear</button>
+
+  </div>
+</div>
+
+
+<!-- =========================
+     SERVER PLACEMENT ADVISOR
+========================= -->
+<div class="placement-wrapper">
+
+  <!-- LEFT: CONTROLS -->
+  <div class="placement-controls">
+    <div class="placement-title">
+      Server Placement Advisor
+    </div>
+
+    <div class="placement-fields">
+      <select id="placementServerSelect">
+        <option value="">Select Server</option>
+      </select>
+
+      <select id="placementRoomSelect">
+        <option value="">Select Room</option>
+      </select>
+
+      <button id="placementSearchBtn">
+        Search Best Location
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT: RESULTS -->
+  <div class="placement-results">
+    <div class="placement-results-title">
+      Results
+    </div>
+
+    <div id="placementAdvisor"></div>
+  </div>
+
+</div>
+
+
+<div class="rooms" id="rooms"></div>
+
+<div id="statusOverview" class="status-overview"></div>
+
+<div id="rackContainer"></div>
+
+<div class="main-split">
+  <div id="rackDetail" class="left-pane"></div>
+  <div class="right-pane">
+    <div id="powerSummary"></div>
+  </div>
+</div>
+
+<button id="backToTop" class="back-to-top">↑</button>
+  `;
+
+  init();
+});
+
+
+/* ========================= */
+
+const MAX_SLOTS = 44;
+const BANK_LIMIT = 8;
+const PHASE_LIMIT = 16;
+let activeStatusFilter = null;
+const STATUS_SHORT = {
+  ACTIVE: "A",
+  RESERVED: "R",
+  PLANNED: "P",
+  INVENTORY: "I",
+  LIQUIDATION: "L",
+  QUARANTINE: "Q",
+  MISSING_PARTS: "MP",
+  HARDFAIL: "H",
+  RECLAIM: "R",
+  DEPLOY: "D",
+  SPARE: "S",
+  LIQUIDATE_PREP: "LP",
+  LIQUIDATION_PROCESSING: "LPR",
+  SPARE_POOL: "SP",
+  DEPLOY2: "D2"
+};
+
+
+
+/* ========================= HELPERS ========================= */
+
+
+ /**********************************************************************************************/
+
+function extractSlotNumber(value) {
+  const match = value?.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
+ /**********************************************************************************************/
+
+function statusClass(status) {
+  return status ? "status-" + status.toUpperCase() : "";
+}
+
+ /**********************************************************************************************/
+
+function cleanBoardName(full) {
+  if (!full) return "";
+
+  const lenovoMatch = full.match(/SR\d{3}/i);
+  if (lenovoMatch) return lenovoMatch[0];
+
+  const smMatch = full.match(/(X\d{2}[A-Z0-9\-\+]+)/i);
+  if (smMatch) return smMatch[0];
+
+  return full.split(" ")[1] ?? full;
+}
+
+ /**********************************************************************************************/
+
+function findServerProfile(boardName) {
+  if (!boardName) return null;
+
+  const lower = boardName.toLowerCase();
+
+  return SERVER_PROFILES.find(s =>
+    lower.includes(s.baseId?.toLowerCase()) ||
+    lower.includes(s.id?.toLowerCase()) ||
+    lower.includes(s.name?.toLowerCase())
+  );
+}
+
+ /**********************************************************************************************/
+
+function buildHardwareTooltip(server) {
+
+  const profile = findServerProfile(server.motherboard);
+
+  const height = profile?.uHeight
+    ? `${profile.uHeight}U`
+    : server.unitSizeCsv
+      ? `${server.unitSizeCsv}U`
+      : "Unknown";
+
+const ramInfo = calculateRamConfig(server.ram);
+
+return `
+  <div class="hw-wrapper">
+    <strong>Motherboard</strong><div>${server.motherboard || "-"}</div>
+    <strong>CPU</strong><div>${server.cpu || "-"}</div>
+
+    <strong>RAM</strong><div>${ramInfo.model}</div>
+    <strong>RAM Config</strong><div>${ramInfo.detail}</div>
+
+    <strong>Controller</strong><div>${server.controller || "-"}</div>
+    <strong>Drives</strong><div>${server.drives || "-"}</div>
+    <strong>Height</strong><div>${height}</div>
+  </div>
+`;
+}
+
+ /**********************************************************************************************/
+
+
+function calculateRamConfig(ramString) {
+
+  if (!ramString) {
+    return {
+      total: "-",
+      detail: "-",
+      model: "-"
+    };
+  }
+
+  // Zoek grootte per dimm (bijv 8GB, 16GB, 32GB)
+  const sizeMatch = ramString.match(/(\d+)\s?GB/i);
+
+  // Zoek aantal dimms (vaak achteraan: - 2)
+  const countMatch = ramString.match(/-\s?(\d+)$/);
+
+  if (!sizeMatch || !countMatch) {
+    return {
+      total: "-",
+      detail: "-",
+      model: ramString
+    };
+  }
+
+  const dimmSize = parseInt(sizeMatch[1], 10);
+  const dimmCount = parseInt(countMatch[1], 10);
+
+  const total = dimmSize * dimmCount;
+
+  return {
+    total: `${total}GB`,
+    detail: `${dimmCount} × ${dimmSize}GB = ${total}GB`,
+    model: ramString
+  };
+}
+
+ /**********************************************************************************************/
+
+function formatHardwareAge(days) {
+
+  if (!days || days <= 0) return "-";
+
+  const years = Math.floor(days / 365);
+  const remainingDays = days % 365;
+  const months = Math.floor(remainingDays / 30);
+
+  if (years === 0 && months === 0) {
+    return `${days}d`;
+  }
+
+  if (years === 0) {
+    return `${months}m`;
+  }
+
+  if (months === 0) {
+    return `${years}y`;
+  }
+
+  return `${years}y ${months}m`;
+}
+
+ /**********************************************************************************************/
+
+function normalizeHardwareString(value) {
+  if (!value) return "";
+
+  return value
+    .replace(/\s*-\s*\d+$/, "")   // verwijder " - 16" ongeacht spaties
+    .trim();
+}
+
+ /**********************************************************************************************/
+
+function extractHardwareModels(value) {
+  if (!value) return [];
+
+  return value
+    .split(/\s-\s/) // splits configuratie op " - "
+    .map(part => part.trim())
+
+    // verwijder entries die alleen aantallen zijn
+    .filter(part => !/^\d+$/.test(part))
+
+    // verwijder leading aantallen zoals "1 Intel..."
+    .map(part => part.replace(/^\d+\s+/, ""))
+
+    // verwijder (Installed) of Installed
+    .map(part => part.replace(/\(Installed\)/gi, "")
+                    .replace(/\bInstalled\b/gi, "")
+                    .trim())
+
+    // verwijder alles waar Disabled in voorkomt
+    .filter(part => !/disabled/i.test(part))
+
+    .filter(Boolean);
+}
+
+ /**********************************************************************************************/
+
+function resolveDriveEntries(driveString) {
+  if (!driveString) return [];
+
+  const models = extractHardwareModels(driveString);
+  const results = [];
+
+  models.forEach(modelString => {
+
+    DRIVE_CATALOG.forEach(entry => {
+      entry.models.forEach(model => {
+        if (modelString.includes(model)) {
+          results.push(entry);
+        }
+      });
+    });
+
+  });
+
+  return results;
+}
+
+ /**********************************************************************************************/
+
+function buildDriveLabel(entry) {
+  return `${entry.media} ${entry.capacityGB}GB`;
+}
+
+ /**********************************************************************************************/
+
+function isOlderThanSixYears(days) {
+  if (!days) return false;
+  return days >= (6 * 365);
+}
+
+ /**********************************************************************************************/
+
+function formatRackName(rack) {
+  if (!rack) return "Unknown";
+
+  const match = rack.match(/\d+/);
+  if (!match) return rack;
+
+  return `Rack ${match[0]}`;
+}
+
+
+ /**********************************************************************************************/
+
+function buildAllRacks(filteredServers) {
+
+  const racks = {};
+
+  // 1️⃣ Groepeer servers per rack
+  filteredServers.forEach(s => {
+    if (!s.rack || !s.slot) return;
+
+    if (!racks[s.rack]) {
+      racks[s.rack] = [];
+    }
+
+    racks[s.rack].push(s);
+  });
+
+  const result = [];
+
+  // 2️⃣ Bouw rack-structuur
+  Object.entries(racks).forEach(([rackId, servers]) => {
+
+    // Maak rackInput voor power-berekening
+    const rackInput = servers.map(s => {
+      const profile = findServerProfile(s.motherboard);
+
+      return {
+        slot: s.slot,
+        serverProfile: profile,
+        utilization: "normal"
+      };
+    });
+
+    const powerResult = calculateRack(rackInput);
+
+    // Bouw servers-structuur voor placement engine
+    const structuredServers = servers.map(s => {
+      const profile = findServerProfile(s.motherboard);
+
+      return {
+        slot: s.slot,
+        uHeight: profile?.uHeight || 1,
+        serverProfile: profile
+      };
+    });
+
+    result.push({
+      rackId,
+      servers: structuredServers,
+      banks: powerResult.banks,
+      phases: powerResult.phases
+    });
+  });
+
+  return result;
+}
+
+/**********************************************************************************************/
+
+function buildPlacementExplanation(s) {
+
+  const reasons = [];
+
+  const load = Math.round(s.slotScore * 100);
+
+  if (load < 50) {
+    reasons.push("Very low impact on rack power");
+  } else if (load < 70) {
+    reasons.push("Acceptable power impact");
+  } else {
+    reasons.push("Higher load impact – monitor closely");
+  }
+
+  if (s.phaseBalanceScore < 0.2) {
+    reasons.push("Keeps power evenly balanced");
+  }
+
+  if (s.bankUtilization < 0.6) {
+    reasons.push("Plenty of power capacity remaining");
+  }
+
+  if (reasons.length === 0) {
+    reasons.push("Within safe operating limits");
+  }
+
+  return reasons.map(r => `• ${r}`).join("<br>");
+}
+
+ /**********************************************************************************************/
+
+
+
+/* ========================= MAIN ========================= */
+
+function init() {
+
+   let rackServers = [];
+
+  
+  populatePlacementServers();
+
+  /* ================= FILTER LISTENERS ================= */
+
+  document.querySelectorAll(".hardware-filter select")
+    .forEach(select => select.addEventListener("change", renderRooms));
+
+document.getElementById("clearFilters")
+  .addEventListener("click", () => {
+    document.querySelectorAll(".hardware-filter select")
+      .forEach(s => s.value = "");
+    renderRooms();
+  });
+
+  document.getElementById("csvInput").addEventListener("change", e => {
+    const reader = new FileReader();
+    reader.onload = evt => {
+      rackServers = parseCSV(evt.target.result);
+      populateFilters(rackServers);
+      renderRooms();
+      populatePlacementRooms(rackServers);
+    };
+    reader.readAsText(e.target.files[0]);
+  });
+
+  document.getElementById("searchInput")
+    .addEventListener("input", renderRooms);
+
+
+ /**********************************************************************************************/
+
+function populateFilters(data) {
+
+  const filterMap = {
+    filterBoard: [...new Set(data.map(s => s.motherboard).filter(Boolean))],
+
+    filterCpu: [...new Set(
+      data.map(s => normalizeHardwareString(s.cpu)).filter(Boolean)
+    )],
+
+    filterRam: [...new Set(
+      data.map(s => normalizeHardwareString(s.ram)).filter(Boolean)
+    )],
+
+    filterController: [...new Set(
+      data.flatMap(s => extractHardwareModels(s.controller))
+    )],
+
+filterDriveGeneric: [...new Set(
+  data.flatMap(s =>
+    resolveDriveEntries(s.drives)
+      .map(e => buildDriveLabel(e))
+  )
+)].sort((a,b) => a.localeCompare(b)),
+
+    filterDrives: [...new Set(
+      data.flatMap(s => extractHardwareModels(s.drives))
+    )]
+  };
+
+  const heights = [...new Set(
+    data.map(s => {
+      const profile = findServerProfile(s.motherboard);
+      return profile?.uHeight ? `${profile.uHeight}U` : null;
+    }).filter(Boolean)
+  )];
+
+  filterMap.filterHeight = heights;
+
+  Object.entries(filterMap).forEach(([id, values]) => {
+
+    const select = document.getElementById(id);
+    if (!select) return;
+
+    const currentValue = select.value;
+    const defaultLabel = select.options[0]?.textContent || "";
+
+    select.innerHTML = `<option value="">${defaultLabel}</option>`;
+
+    // 🔥 Generic drives (object-based)
+if (id === "filterDriveGeneric") {
+
+  values.forEach(label => {
+    const opt = document.createElement("option");
+    opt.value = label;
+    opt.textContent = label;
+    select.appendChild(opt);
+  });
+
+} else {
+
+      values
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          select.appendChild(opt);
+        });
+    }
+
+    // restore previous selection if still valid
+    if ([...select.options].some(o => o.value === currentValue)) {
+      select.value = currentValue;
+    }
+
+  });
+}
+
+ /**********************************************************************************************/
+
+  function parseCSV(text) {
+
+    const result = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true
+    });
+
+    return result.data
+      .filter(r => r["View Hardware"]?.includes("HYPERLINK"))
+      .map(row => {
+
+        // 🔹 Extract volledige hyperlink uit HYPERLINK(...)
+        const linkMatch = row["View Hardware"]?.match(/"(https:[^"]+)"/i);
+        let hardwareUrl = linkMatch ? linkMatch[1] : null;
+
+        // 🔹 view → update vervangen
+        if (hardwareUrl) {
+          hardwareUrl = hardwareUrl.replace("/view/", "/update/");
+        }
+
+        const loc = (row["Location"] || "").split(".");
+
+return {
+  hostname: row["Fully Qualified Domain Name"] || "",
+  status: row["Hardware Status"] || "",
+  sltag: row["SoftLayer Serial Number"] || "",
+  accountId: row["Account Id"] || "",
+  ageDays: parseInt(row["Days old"], 10) || 0,
+  hardwareUrl: hardwareUrl,
+
+  motherboard: cleanBoardName(row["Motherboard Model"]),
+  cpu: row["Processor Model (Expand Row to view additional models)"] || "",
+  ram: row["Ram Model (Expand Row to view additional models)"] || "",
+  drives: row["Hard Drive Model (Expand Row to view additional models)"] || "",
+  controller: row["Drive Controller Model (Expand Row to view additional models)"] || "",
+  driveCapacity: row["Drive Capacity"] || "",
+  psu: row["Power Capacity"] || "",
+  unitSizeCsv: row["Unit Size"] || "",
+
+  room: (loc[1] || "").toUpperCase(),
+  rack: (loc[2] || "").toUpperCase(),
+  slot: extractSlotNumber(loc[3])
+};
+      });
+  }
+
+  /**********************************************************************************************/
+
+
+function renderRooms() {
+
+  const search = document.getElementById("searchInput").value.toLowerCase();
+
+  const filters = {
+    board: document.getElementById("filterBoard").value,
+    height: document.getElementById("filterHeight").value,
+    cpu: document.getElementById("filterCpu").value,
+    ram: document.getElementById("filterRam").value,
+    controller: document.getElementById("filterController").value,
+    driveGeneric: document.getElementById("filterDriveGeneric").value,
+    drives: document.getElementById("filterDrives").value
+  };
+
+  const filtered = rackServers.filter(s => {
+
+    const profile = findServerProfile(s.motherboard);
+    const height = profile?.uHeight ? `${profile.uHeight}U` : "";
+
+    return (
+      (!search ||
+        s.hostname.toLowerCase().includes(search) ||
+        s.accountId.toLowerCase().includes(search)
+      ) &&
+      (!filters.board || s.motherboard === filters.board) &&
+      (!filters.cpu || normalizeHardwareString(s.cpu) === filters.cpu) &&
+      (!filters.ram || normalizeHardwareString(s.ram) === filters.ram) &&
+      (!filters.controller || extractHardwareModels(s.controller).includes(filters.controller)) &&
+      (!filters.driveGeneric || resolveDriveEntries(s.drives).map(e => buildDriveLabel(e)).includes(filters.driveGeneric)) &&
+      (!filters.drives || extractHardwareModels(s.drives).includes(filters.drives)) &&
+      (!filters.height || height === filters.height) &&
+      (!activeStatusFilter || (s.status || "").toUpperCase().replace(/\s+/g, "_") === activeStatusFilter)
+    );
+  });
+
+  populateFilters(filtered.length ? filtered : rackServers);
+
+  const rooms = [...new Set(
+    filtered
+      .map(s => s.room)
+      .filter(r => r && !r.startsWith("STR"))
+  )].sort((a, b) => a.localeCompare(b));
+
+  const container = document.getElementById("rooms");
+  container.innerHTML = "";
+
+  // ================= ALL BUTTON =================
+
+  const allBtn = document.createElement("div");
+  allBtn.className = "room-btn";
+  allBtn.textContent = "ALL";
+
+  allBtn.onclick = () => {
+    document.querySelectorAll(".room-btn")
+      .forEach(b => b.classList.remove("active"));
+
+    allBtn.classList.add("active");
+    renderAllRooms(filtered);
+    renderStatusOverview(filtered);
+  };
+
+  container.appendChild(allBtn);
+
+  // ================= NORMAL ROOMS =================
+
+  rooms.forEach(room => {
+
+    const btn = document.createElement("div");
+    btn.className = "room-btn";
+    btn.textContent = room;
+
+    btn.onclick = () => {
+      document.querySelectorAll(".room-btn")
+        .forEach(b => b.classList.remove("active"));
+
+      btn.classList.add("active");
+      const roomData = filtered.filter(s => s.room === room);
+
+      renderRacks(filtered, room);
+      renderStatusOverview(roomData);
+    };
+
+    container.appendChild(btn);
+  });
+
+  // Default selectie
+  allBtn.click();
+
+  // ================= PLACEMENT TEST =================
+
+const allRacks = buildAllRacks(filtered);
+
+
+
+
+document.getElementById("placementSearchBtn")
+  .addEventListener("click", () => {
+
+    const serverId = document.getElementById("placementServerSelect").value;
+    const room     = document.getElementById("placementRoomSelect").value;
+
+    if (!serverId) {
+      alert("Select a server first.");
+      return;
+    }
+
+    const profile = SERVER_PROFILES.find(s => s.id === serverId);
+    if (!profile) return;
+
+    let baseData = rackServers;
+
+    if (room) {
+      baseData = rackServers.filter(s => s.room === room);
+    }
+
+    const allRacks = buildAllRacks(baseData);
+
+    const suggestions = suggestBestPlacement(
+      profile,
+      allRacks,
+      suggestBestSlot
+    );
+
+    renderPlacementAdvisor(suggestions);
+});
+
+}
+
+
+ /**********************************************************************************************/
+
+function createRackCard({ title, rack, list }) {
+
+  const stats = {};
+
+  list.forEach(s => {
+    const status = (s.status || "")
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, "_");
+
+    if (!status) return;
+
+    stats[status] = (stats[status] || 0) + 1;
+  });
+
+  const card = document.createElement("div");
+  card.className = "rack-card";
+
+  card.innerHTML = `
+    <div class="rack-title">${title}</div>
+    <div>${list.length} / ${MAX_SLOTS} used</div>
+
+    <div class="rack-stats">
+      ${
+        Object.entries(stats)
+          .filter(([_, count]) => count > 0)
+          .map(([status, count]) => `
+            <div class="rack-pill status-${status}">
+              ${STATUS_SHORT[status] || status}-${count}
+              <span class="pill-tooltip">
+                ${status.replace(/_/g, " ")}: ${count}
+              </span>
+            </div>
+          `)
+          .join("")
+      }
+    </div>
+  `;
+
+  card.onclick = () => {
+    renderRackDetail(rack, list);
+    renderPowerSummary(rack, list);
+
+    const detail = document.getElementById("rackDetail");
+    if (detail) {
+      detail.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  };
+
+  return card;
+}
+
+ /**********************************************************************************************/
+
+function renderAllRooms(data) {
+
+  const container = document.getElementById("rackContainer");
+  container.innerHTML = `<div class="rack-grid"></div>`;
+  const grid = container.firstChild;
+
+  const rooms = [...new Set(
+    data
+      .map(s => s.room)
+      .filter(r => r && !r.startsWith("STR"))
+  )].sort((a, b) => a.localeCompare(b));
+
+  rooms.forEach(room => {
+
+    const racks = {};
+
+    data
+      .filter(s => s.room === room)
+      .forEach(s => {
+        if (!racks[s.rack]) racks[s.rack] = [];
+        racks[s.rack].push(s);
+      });
+
+    Object.keys(racks)
+      .sort((a, b) => parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", "")))
+      .forEach(rack => {
+
+        const list = racks[rack];
+
+        const card = createRackCard({
+          title: `${room} - ${formatRackName(rack)}`,
+          rack,
+          list
+        });
+
+        grid.appendChild(card);
+      });
+  });
+}
+
+
+ /**********************************************************************************************/
+
+
+function renderRacks(data, room) {
+
+const racks = {};
+const unassigned = [];
+
+// Groeperen
+data
+  .filter(s => s.room === room)
+  .forEach(s => {
+
+    // Geen rack of geen slot → unassigned
+    if (!s.rack || !s.slot) {
+      unassigned.push(s);
+      return;
+    }
+
+    if (!racks[s.rack]) racks[s.rack] = [];
+    racks[s.rack].push(s);
+  });
+
+  const grid = document.getElementById("rackContainer");
+  grid.innerHTML = `<div class="rack-grid"></div>`;
+  const container = grid.firstChild;
+
+  if (unassigned.length > 0) {
+
+  const card = document.createElement("div");
+  card.className = "rack-card";
+
+  const stats = {};
+
+  unassigned.forEach(s => {
+    const status = (s.status || "")
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, "_");
+
+    if (!status) return;
+
+    stats[status] = (stats[status] || 0) + 1;
+  });
+
+  card.innerHTML = `
+    <div class="rack-title">UNASSIGNED</div>
+    <div>${unassigned.length} items</div>
+
+    <div class="rack-stats">
+      ${
+        Object.entries(stats)
+          .map(([status, count]) => `
+            <div class="rack-pill status-${status}">
+              ${STATUS_SHORT[status] || status}-${count}
+              <span class="pill-tooltip">
+                ${status.replace(/_/g, " ")}: ${count}
+              </span>
+            </div>
+          `)
+          .join("")
+      }
+    </div>
+  `;
+
+card.onclick = () => {
+  renderUnassignedDetail(unassigned);
+
+  const detail = document.getElementById("rackDetail");
+  if (detail) {
+    detail.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+};
+
+  container.appendChild(card);
+}
+
+  Object.keys(racks)
+    .sort((a, b) => parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", "")))
+    .forEach(rack => {
+
+      const list = racks[rack];
+
+      const card = createRackCard({
+        title: formatRackName(rack),
+        rack,
+        list
+      });
+
+      container.appendChild(card);
+    });
+}
+
+ /**********************************************************************************************/
+
+function renderUnassignedDetail(list) {
+
+  const container = document.getElementById("rackDetail");
+
+  container.innerHTML = `
+    <div class="rack-detail-header">UNASSIGNED</div>
+
+    <div class="unassigned-row unassigned-header">
+      <div>Status</div>
+      <div>Board</div>
+      <div>Hostname</div>
+      <div>SLTag</div>
+      <div>Account</div>
+      <div>Age</div>
+    </div>
+  `;
+
+  list.forEach(server => {
+
+    const row = document.createElement("div");
+    row.className = "unassigned-row";
+
+    row.innerHTML = `
+      <div>
+        <span class="status-badge ${statusClass(server.status)}">
+          ${server.status || "-"}
+        </span>
+      </div>
+
+      <div class="board-cell">
+        <span class="hardware-icon">
+          <svg class="hw-icon" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="4" rx="1"></rect>
+            <rect x="3" y="11" width="18" height="4" rx="1"></rect>
+            <rect x="3" y="17" width="18" height="2" rx="1"></rect>
+          </svg>
+          <div class="hardware-tooltip">
+            ${buildHardwareTooltip(server)}
+          </div>
+        </span>
+        <span class="board-name">
+          ${server.motherboard || "-"}
+        </span>
+      </div>
+
+      <div class="hostname">${server.hostname || "-"}</div>
+
+      <div>
+        ${
+          server.hardwareUrl
+            ? `<a href="${server.hardwareUrl}"
+                 target="_blank"
+                 class="rack-link">
+                 ${server.sltag || "-"}
+               </a>`
+            : (server.sltag || "-")
+        }
+      </div>
+
+      <div>${server.accountId || "-"}</div>
+
+      <div class="age-cell">
+        ${formatHardwareAge(server.ageDays)}
+        ${
+          isOlderThanSixYears(server.ageDays)
+            ? `
+              <span class="age-warning-wrapper">
+                <span class="age-warning">!</span>
+                <span class="age-tooltip">
+                  Server age exceeds 6 years
+                </span>
+              </span>
+            `
+            : ""
+        }
+      </div>
+    `;
+
+    container.appendChild(row);
+  });
+}
+
+
+ /**********************************************************************************************/
+
+  function renderRackDetail(rack, list) {
+
+  const container = document.getElementById("rackDetail");
+
+  container.innerHTML = `
+    <div class="rack-detail-header">${rack}</div>
+    <div class="slot-row header">
+      <div>#</div>
+      <div>Status</div>
+      <div>Board</div>
+      <div>Hostname</div>
+      <div>SLTag</div>
+      <div>Account</div>
+      <div>Age</div>
+    </div>
+  `;
+
+  const slotMap = {};
+  list.forEach(s => slotMap[s.slot] = s);
+
+  const occupied = new Set();
+
+  for (let i = 1; i <= MAX_SLOTS; i++) {
+
+    if (occupied.has(i)) continue;
+
+    const row = document.createElement("div");
+    row.className = "slot-row";
+
+    const server = slotMap[i];
+
+    if (server) {
+
+      const profile = findServerProfile(server.motherboard);
+      const uHeight = profile?.uHeight || 1;
+
+      // markeer onderliggende slots als bezet
+      for (let u = 0; u < uHeight; u++) {
+        occupied.add(i + u);
+      }
+
+      row.style.gridRow = `span ${uHeight}`;
+      row.style.height = `${34 * uHeight}px`;
+
+row.innerHTML = `
+  <div>${i}</div>
+  <div>
+    <span class="status-badge ${statusClass(server.status)}">
+      ${server.status}
+    </span>
+  </div>
+
+  <div class="board-cell">
+    <span class="hardware-icon">
+      <svg class="hw-icon" viewBox="0 0 24 24">
+          <rect x="3" y="5" width="18" height="4" rx="1"></rect>
+          <rect x="3" y="11" width="18" height="4" rx="1"></rect>
+          <rect x="3" y="17" width="18" height="2" rx="1"></rect>
+      </svg>
+      <div class="hardware-tooltip">
+        ${buildHardwareTooltip(server)}
+      </div>
+    </span>
+    <span class="board-name">
+      ${server.motherboard}
+    </span>
+  </div>
+  <div class="hostname">${server.hostname}</div>
+  <div>
+    ${server.hardwareUrl
+      ? `<a href="${server.hardwareUrl}"
+           target="_blank"
+           class="rack-link">
+           ${server.sltag}
+         </a>`
+      : server.sltag}
+  </div>
+  <div>${server.accountId}</div>
+<div class="age-cell">
+  ${formatHardwareAge(server.ageDays)}
+  ${
+    isOlderThanSixYears(server.ageDays)
+      ? `
+        <span class="age-warning-wrapper">
+          <span class="age-warning">!</span>
+          <span class="age-tooltip">
+            Warning: server is older than 6 years
+          </span>
+        </span>
+      `
+      : ""
+  }
+</div>
+`;
+
+    } else {
+
+row.innerHTML = `
+  <div>${i}</div>
+  <div></div>
+  <div></div>
+  <div class="empty">— empty —</div>
+  <div></div>
+  <div></div>
+  <div></div>
+`;
+    }
+
+    container.appendChild(row);
+  }
+}
+
+ /**********************************************************************************************/
+
+function renderPowerSummary(rack, list) {
+
+  const rackInput = list.map(s => ({
+    slot: s.slot,
+    serverProfile: findServerProfile(s.motherboard),
+    utilization: "normal"
+  }));
+
+  const result = calculateRack(rackInput);
+
+  const banks = result.banks;
+  const phases = result.phases;
+  const totalAmp = result.totalAmp;
+
+  // 🔽 NIEUW: rack analyse toevoegen
+  const rackServers = list.map(s => ({
+    slot: s.slot,
+    uHeight: findServerProfile(s.motherboard)?.uHeight || 1
+  }));
+
+  const rackAnalysis = analyzeRack(rackServers, banks, phases);
+  const rackPenalty  = calculateRackPenalty(rackAnalysis);
+
+  console.log("Rack Analysis:", rackAnalysis);
+  console.log("Rack Penalty:", rackPenalty);
+
+    function usageClass(value, limit) {
+      if (value > limit) return "bad";
+      if (value > limit * 0.8) return "warn";
+      return "ok";
+    }
+
+    const container = document.getElementById("powerSummary");
+
+container.innerHTML = `
+  <div class="rack-detail-header">${rack}</div>
+
+  <div class="power-card ${usageClass(totalAmp, PHASE_LIMIT * 3)}">
+    <div class="power-title">Total Design Load</div>
+    <div class="power-value">${totalAmp.toFixed(2)} A</div>
+  </div>
+
+      <div class="power-card">
+        <div class="power-title">Phase Usage</div>
+        ${phases.map((p,i)=>`
+          <div class="${usageClass(p, PHASE_LIMIT)}">
+            L${i+1}: ${p.toFixed(2)}A / ${PHASE_LIMIT}A
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="power-card">
+        <div class="power-title">Bank Usage</div>
+        ${banks.map((b,i)=>`
+          <div class="${usageClass(b, BANK_LIMIT)}">
+            Bank ${String.fromCharCode(65+i)}: ${b.toFixed(2)}A / ${BANK_LIMIT}A
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+ /**********************************************************************************************/
+
+function renderStatusOverview(data) {
+
+  const container = document.getElementById("statusOverview");
+  if (!container) return;
+
+  // 🔹 Definieer vaste volgorde
+  const STATUS_ORDER = [
+    "ACTIVE",
+    "RESERVED",
+    "PLANNED",
+    "INVENTORY",
+    "QUARANTINE",
+    "LIQUIDATION",
+    "MISSING_PARTS",
+    "HARDFAIL",
+    "RECLAIM",
+    "DEPLOY",
+    "SPARE"
+  ];
+
+  const stats = {};
+
+  // 🔹 Tellen
+  data.forEach(s => {
+    const status = (s.status || "")
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, "_");
+
+    if (!status) return;
+
+    stats[status] = (stats[status] || 0) + 1;
+  });
+
+  const total = data.length;
+
+  // 🔹 Sorteren op vaste volgorde
+  const sortedStatuses = Object.keys(stats)
+    .sort((a, b) => {
+      const aIndex = STATUS_ORDER.indexOf(a);
+      const bIndex = STATUS_ORDER.indexOf(b);
+
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+
+      return aIndex - bIndex;
+    });
+
+  // 🔹 Renderen
+  container.innerHTML = `
+    <div class="status-box total-box">
+      TOTAL <span>${total}</span>
+    </div>
+
+${sortedStatuses.map(status => `
+  <div 
+    class="status-box status-${status} ${activeStatusFilter === status ? "active-filter" : ""}"
+    data-status="${status}"
+  >
+    ${status.replace(/_/g, " ")}
+    <span>${stats[status]}</span>
+  </div>
+`).join("")}
+  `;
+
+  document.querySelectorAll(".status-box[data-status]").forEach(el => {
+  el.onclick = () => {
+
+    const clickedStatus = el.dataset.status;
+
+    // toggle gedrag
+    if (activeStatusFilter === clickedStatus) {
+      activeStatusFilter = null;
+    } else {
+      activeStatusFilter = clickedStatus;
+    }
+
+    renderRooms(); // alles opnieuw renderen
+  };
+});
+}
+
+ /**********************************************************************************************/
+
+function populatePlacementServers() {
+
+  const select = document.getElementById("placementServerSelect");
+  if (!select) return;
+
+  select.innerHTML = `<option value="">Select Server</option>`;
+
+  // 🔥 GEEN sort — volgorde blijft exact zoals in servers.js
+
+  SERVER_PROFILES.forEach(server => {
+
+    const opt = document.createElement("option");
+    opt.value = server.id;
+    opt.textContent = `${server.id} `;
+
+    select.appendChild(opt);
+  });
+}
+
+ /**********************************************************************************************/
+
+function populatePlacementRooms(filteredServers) {
+
+  const select = document.getElementById("placementRoomSelect");
+  if (!select) return;
+  const rooms = [...new Set(
+    filteredServers
+      .map(s => s.room)
+      .filter(room => room && !room.startsWith("STR")) // 🔥 STR uitsluiten
+  )].sort((a,b) => a.localeCompare(b));
+
+  rooms.forEach(room => {
+    const opt = document.createElement("option");
+    opt.value = room;
+    opt.textContent = room;
+    select.appendChild(opt);
+  });
+}
+ /**********************************************************************************************/
+
+function renderPlacementAdvisor(suggestions) {
+
+  const container = document.getElementById("placementAdvisor");
+  if (!container) return;
+
+  if (!suggestions || suggestions.length === 0) {
+    container.innerHTML = `
+      <div class="advisor-empty">
+        No safe placement found within policy.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="advisor-list">
+      ${suggestions.map((s, index) => {
+
+        const medal =
+          index === 0 ? "🥇" :
+          index === 1 ? "🥈" :
+          "🥉";
+
+        const scorePercent = Math.round(s.slotScore * 100);
+
+        const safetyClass =
+          s.slotScore < 0.7 ? "advisor-safe" :
+          s.slotScore < 0.9 ? "advisor-warn" :
+          "advisor-danger";
+
+        const explanation = buildPlacementExplanation(s);
+
+        return `
+          <div class="advisor-item ${safetyClass}" data-rack="${s.rackId}">
+            
+            <div class="advisor-left">
+              <div class="advisor-rank">${medal}</div>
+
+              <div class="advisor-info">
+                <strong>${s.rackId}</strong>
+                <span>Slot ${s.slot}</span>
+
+                <div class="advisor-reason">
+                  ${explanation}
+                </div>
+              </div>
+            </div>
+
+            <div class="advisor-score">
+              ${scorePercent}% Load
+            </div>
+
+          </div>
+        `;
+
+      }).join("")}
+    </div>
+  `;
+
+  document.querySelectorAll(".advisor-item").forEach(el => {
+    el.onclick = () => {
+      const rackId = el.dataset.rack;
+
+      const rackCard = [...document.querySelectorAll(".rack-card")]
+        .find(card => card.innerText.includes(rackId));
+
+      if (rackCard) {
+        rackCard.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+      }
+    };
+  });
+}
+
+// ================= BACK TO TOP =================
+
+const backToTop = document.getElementById("backToTop");
+const content = document.getElementById("content");
+
+if (backToTop && content) {
+
+  content.addEventListener("scroll", () => {
+    if (content.scrollTop > 300) {
+      backToTop.classList.add("visible");
+    } else {
+      backToTop.classList.remove("visible");
+    }
+  });
+
+  backToTop.addEventListener("click", () => {
+    content.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  });
+
+}
+  
+}
+</script>
