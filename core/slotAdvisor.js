@@ -1,4 +1,4 @@
-import { calculateRack } from "./eatonCalculator.js";
+import { calculateRack } from "./eatoncalculator.js";
 import { POLICY } from "./rackAnalysis.js";
 
 export function suggestBestSlot(serverProfile, rackServers) {
@@ -81,4 +81,5 @@ export function suggestBestSlot(serverProfile, rackServers) {
   }
 
   return best;
+
 }
