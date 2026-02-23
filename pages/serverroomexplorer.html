@@ -17,13 +17,13 @@
 
 <script type="module">
 
-import { loadLayout } from "../app/layout.js";
-import { servers as SERVER_PROFILES } from "../data/servers.js";
-import { calculateRack } from "../core/eatoncalculator.js";
-import { DRIVE_CATALOG } from "../data/drives.js";
-import { analyzeRack, calculateRackPenalty } from "../core/rackAnalysis.js";
-import { suggestBestPlacement } from "../core/placementAdvisor.js";
-import { suggestBestSlot } from "../core/slotAdvisor.js";
+import { loadLayout } from "/rack-power-calculator/app/layout.js";
+import { servers as SERVER_PROFILES } from "/rack-power-calculator/data/servers.js";
+import { calculateRack } from "/rack-power-calculator/core/eatoncalculator.js";
+import { DRIVE_CATALOG } from "/rack-power-calculator/data/drives.js";
+import { analyzeRack, calculateRackPenalty } from "/rack-power-calculator/core/rackAnalysis.js";
+import { suggestBestPlacement } from "/rack-power-calculator/core/placementAdvisor.js";
+import { suggestBestSlot } from "/rack-power-calculator/core/slotAdvisor.js";
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("serverroom");
@@ -1469,4 +1469,5 @@ if (backToTop && content) {
 }
   
 }
+
 </script>
