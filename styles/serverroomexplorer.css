@@ -1,0 +1,946 @@
+html {
+  scroll-behavior: smooth;
+}
+
+
+/* =========================================================
+   GLOBAL STATUS COLORS
+   ========================================================= */
+
+:root {
+  --active: #cc382e;
+  --reserved: #f39c12;
+  --planned: #8e44ad;
+  --inventory: #2c9a5f;
+
+  --liquidation: #6b7280;
+  --quarantine: #f1c40f;
+  --missing: #2980b9;
+  --hardfail: #7f1d1d;
+
+  /* ===== NIEUWE ===== */
+
+  --reclaim: #009688;                 /* teal */
+  --deploy: #3f51b5;                  /* indigo */
+  --spare: #607d8b;                   /* slate */
+  --liquidate-prep: #ff5722;          /* deep orange */
+  --liquidation-processing: #795548;  /* brown */
+  --spare-pool: #00acc1;              /* cyan */
+  --deploy2: #e91e63;                 /* pink */
+
+  --border-light: #e5e7eb;
+  --border-dark: #d1d5db;
+  --row-alt: #f9fafb;
+  --row-bg: #f3f4f6;
+}
+
+
+
+
+
+
+/* =========================================================
+   ROOM BUTTONS
+   ========================================================= */
+
+.rooms {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.room-btn {
+  padding: 6px 12px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+
+.room-btn:hover {
+  background: #d1d5db;
+}
+
+.room-btn.active {
+  background: #cbd5e1;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   RACK CARDS
+   ========================================================= */
+
+.rack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+.rack-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.rack-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+.rack-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.rack-stats {
+  display: flex;
+  flex-wrap: wrap;   /* rij mag wrappen */
+  gap: 4px;
+}
+
+.rack-pill {
+  white-space: nowrap;  /* 🔥 pill zelf mag NIET breken */
+}
+
+/* =========================================================
+   RACK CARD PILLS
+   ========================================================= */
+
+
+
+.rack-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.rack-pill.status-ACTIVE { background: var(--active); }
+.rack-pill.status-RESERVED { background: var(--reserved); color:#000; }
+.rack-pill.status-PLANNED { background: var(--planned); }
+.rack-pill.status-INVENTORY { background: var(--inventory); }
+.rack-pill.status-LIQUIDATION { background: var(--liquidation); }
+.rack-pill.status-QUARANTINE { background: var(--quarantine); color:#000; }
+.rack-pill.status-MISSING_PARTS { background: var(--missing); }
+.rack-pill.status-HARDFAIL { background: var(--hardfail); }
+
+.rack-pill.status-RECLAIM { background: var(--reclaim); }
+.rack-pill.status-DEPLOY { background: var(--deploy); }
+.rack-pill.status-SPARE { background: var(--spare); }
+.rack-pill.status-LIQUIDATE_PREP { background: var(--liquidate-prep); }
+.rack-pill.status-LIQUIDATION_PROCESSING { background: var(--liquidation-processing); }
+.rack-pill.status-SPARE_POOL { background: var(--spare-pool); }
+.rack-pill.status-DEPLOY2 { background: var(--deploy2); }
+
+.progress {
+  height: 6px;
+  background: #e5e7eb;
+  margin-top: 6px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #3b82f6;
+}
+
+.rack-card > div:not(.rack-stats):not(.progress) {
+  color: #000;
+}
+
+/* Actieve rack card */
+.rack-card.active {
+  border: 5px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+/* =========================================================
+   LAYOUT SPLIT
+   ========================================================= */
+
+.main-split {
+  display: flex;
+  gap: 28px;
+}
+
+.left-pane {
+  flex: 1;
+  min-width: 0;
+}
+
+.right-pane {
+  width: 380px;
+  border-left: 1px solid var(--border-light);
+  padding-left: 20px;
+}
+
+
+/* =========================================================
+   SLOT TABLE
+   ========================================================= */
+
+
+.slot-row {
+  display: grid;
+  overflow: visible;
+grid-template-columns:
+  40px      /* U */
+  110px     /* Status */
+  140px     /* Board */
+  1.8fr     /* Hostname */
+  120px     /* SLTag */
+  100px     /* Account */
+  90px;     /* Age */
+
+  font-size: 13px;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.slot-row > div {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.slot-row > div.board-cell {
+  overflow: visible !important;
+}
+
+.slot-row:nth-child(even) {
+  background: var(--row-alt);
+}
+
+.header {
+  font-weight: 600;
+  background: #e5e7eb;
+  border-bottom: 2px solid var(--border-dark);
+}
+
+.slot-row > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hostname {
+  font-weight: 600;
+}
+
+.empty {
+  color: #9ca3af;
+}
+
+
+
+/* =========================================================
+   STATUS BADGES (TABLE)
+   ========================================================= */
+
+.status-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 600;
+  color: #fff;
+  display: inline-block;
+}
+
+.status-ACTIVE { background: var(--active); color: #fff; }
+.status-RESERVED { background: var(--reserved); color: #fff; }
+.status-PLANNED { background: var(--planned); color: #fff; }
+.status-INVENTORY { background: var(--inventory); color: #fff; }
+.status-LIQUIDATION { background: var(--liquidation); color: #fff; }
+.status-QUARANTINE { background: var(--quarantine); color: #000; }
+.status-MISSING_PARTS { background: var(--missing); color: #fff; }
+.status-HARDFAIL { background: var(--hardfail); color: #fff; }
+.status-RECLAIM { background: var(--reclaim); color: #fff; }
+.status-DEPLOY { background: var(--deploy); color: #fff; }
+.status-SPARE { background: var(--spare); color: #fff; }
+.status-LIQUIDATE_PREP { background: var(--liquidate-prep); color: #fff; }
+.status-LIQUIDATION_PROCESSING { background: var(--liquidation-processing); color: #fff; }
+.status-SPARE_POOL { background: var(--spare-pool); color: #fff; }
+.status-DEPLOY2 { background: var(--deploy2); color: #fff; }
+
+/* Donkere achtergronden → witte tekst */
+.status-ACTIVE,
+.status-HARDFAIL,
+.status-PLANNED,
+.status-LIQUIDATION,
+.status-INVENTORY,
+.status-SPARE,
+.status-MISSING_PARTS {
+  color: #fff;
+}
+
+/* Lichte achtergronden → zwarte tekst */
+.status-RESERVED,
+.status-QUARANTINE,
+.status-RECLAIM,
+.status-DEPLOY {
+  color: #000;
+}
+
+/* =========================================================
+   POWER CARDS
+   ========================================================= */
+
+.rack-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.rack-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transform: translateY(-2px);
+}
+
+.power-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.power-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   POWER STATUS COLORS
+   ========================================================= */
+
+.ok {
+  border-left: 4px solid #16a34a;   /* groen */
+}
+
+.warn {
+  border-left: 4px solid #f59e0b;   /* oranje */
+}
+
+.bad {
+  border-left: 4px solid #dc2626;   /* rood */
+}
+
+/* =========================================================
+   GLOBAL STATUS OVERVIEW
+   ========================================================= */
+
+.status-overview {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 24px 0;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.status-box {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.status-box span {
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Overview box gebruikt dezelfde kleur als badges */
+.status-box {
+  color: #fff;
+}
+
+.status-box.status-ACTIVE { background: var(--active); }
+.status-box.status-RESERVED { background: var(--reserved); }
+.status-box.status-PLANNED { background: var(--planned); }
+.status-box.status-INVENTORY { background: var(--inventory); }
+
+.status-box.status-LIQUIDATION { background: var(--liquidation); color:#fff; }
+.status-box.status-QUARANTINE { background: var(--quarantine); color:#000; }
+.status-box.status-MISSING_PARTS { background: var(--missing); }
+.status-box.status-HARDFAIL { background: var(--hardfail); }
+.status-box.status-RECLAIM { background: var(--reclaim); color:#fff; }
+.status-box.status-DEPLOY { background: var(--deploy); color:#fff; }
+.status-box.status-SPARE { background: var(--spare); color:#fff; }
+.status-box.status-LIQUIDATE_PREP { background: var(--liquidate-prep); color:#fff; }
+.status-box.status-LIQUIDATION_PROCESSING { background: var(--liquidation-processing); color:#fff; }
+.status-box.status-SPARE_POOL { background: var(--spare-pool); color:#fff; }
+.status-box.status-DEPLOY2 { background: var(--deploy2); color:#fff; }
+
+/* =========================================================
+   BACK TO TOP BUTTON
+   ========================================================= */
+
+.back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: 50%;
+  border: none;
+
+  background: #111827;
+  color: #ffffff;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+.back-to-top:hover {
+  transform: translateY(-2px);
+}
+
+.back-to-top.visible {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+/* =========================================================
+   RACK DETAIL HEADER
+   ========================================================= */
+
+.rack-detail-header {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+
+
+
+
+/* =========================
+   HARDWARE TOOLTIP
+   ========================= */
+
+.board-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+}
+
+/* override algemene cell overflow */
+.slot-row > div.board-cell {
+  overflow: visible !important;
+}
+
+.hardware-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.15s ease;
+}
+
+.hardware-icon:hover {
+  color: #111827;
+}
+
+.hw-icon {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.hardware-tooltip {
+  position: absolute;
+
+  top: 50%;
+  left: 110%;
+  transform: translateY(-50%);
+
+  background: #111827;
+  color: #ffffff;
+
+  padding: 14px 18px;
+
+  min-width: 280px;        /* iets breder */
+  max-width: 600px;        /* voorkomt gigantische tooltips */
+  width: max-content;      /* groeit mee met content */
+
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+
+  white-space: normal;     /* tekst mag wrappen */
+  word-break: break-word;  /* lange strings breken netjes */
+
+  box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+
+  z-index: 9999;
+}
+
+/* Arrow */
+.hardware-tooltip::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent #111827 transparent transparent;
+}
+
+/* Hover active */
+.hardware-icon:hover .hardware-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hw-wrapper {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  row-gap: 6px;
+  column-gap: 10px;
+}
+
+.hw-wrapper strong {
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.status-box {
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.status-box:hover {
+  transform: scale(1.05);
+}
+
+.status-box.active-filter {
+  outline: 2px solid #000;
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.age-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.age-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 14px;
+  height: 14px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  border-radius: 50%;
+
+  background: #dc2626;  /* rood */
+  color: #ffffff;
+
+  margin-left: 6px;
+}
+
+.age-warning-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.age-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 14px;
+  height: 14px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  border-radius: 50%;
+  background: #dc2626;
+  color: #ffffff;
+
+  margin-left: 6px;
+  cursor: default;
+}
+
+/* Tooltip */
+.age-tooltip {
+  position: absolute;
+  bottom: 140%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #111827;
+  color: #ffffff;
+
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  font-size: 12px;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+  z-index: 1000;
+}
+
+.age-warning-wrapper:hover .age-tooltip {
+  opacity: 1;
+}
+
+.age-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: visible !important;
+}
+
+.slot-row > div.age-cell {
+  overflow: visible !important;
+}
+
+/* =========================
+   RACK PILL TOOLTIP
+   ========================= */
+
+.rack-pill {
+  position: relative;
+  cursor: default;
+}
+
+.pill-tooltip {
+  position: absolute;
+  bottom: 140%;
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #111827;
+  color: #ffffff;
+
+  padding: 4px 8px;
+  border-radius: 6px;
+
+  font-size: 11px;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+  z-index: 1000;
+}
+
+.rack-pill:hover .pill-tooltip {
+  opacity: 1;
+}
+
+/* =========================
+   UNASSIGNED TABLE
+   ========================= */
+
+.unassigned-row {
+  display: grid;
+  grid-template-columns:
+    120px   /* Status */
+    160px   /* Board */
+    1.8fr   /* Hostname */
+    140px   /* SLTag */
+    120px   /* Account */
+    100px;  /* Age */
+
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 0;
+  min-height: 34px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 13px;
+}
+
+.unassigned-row:nth-child(even) {
+  background: var(--row-alt);
+}
+
+.unassigned-header {
+  font-weight: 600;
+  background: #e5e7eb;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 2px solid var(--border-dark);
+}
+
+/* =========================================================
+   GLOBAL CONTROL SYSTEM (UNIFORM)
+   ========================================================= */
+
+.control-group {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.control-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.control-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* === Uniform inputs / selects / buttons === */
+
+.control-row select,
+.control-row input[type="text"],
+.control-row input[type="file"],
+.control-row button {
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* Inputs & selects */
+.control-row select,
+.control-row input[type="text"],
+.control-row input[type="file"] {
+  background: #ffffff;
+  border: 1px solid #cfd6dd;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+.control-row select:focus,
+.control-row input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+/* Buttons */
+.control-row button {
+  background: #111827;
+  border: none;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.control-row button:hover {
+  background: #1f2937;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   COMBINED PLACEMENT LAYOUT
+   ========================================================= */
+
+.placement-wrapper {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 10px;
+
+  margin: 20px 0 30px 0;
+  padding: 10px;
+
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ================= LEFT ================= */
+
+.placement-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.placement-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.placement-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.placement-fields select,
+.placement-fields button {
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.placement-fields select {
+  background: #ffffff;
+  border: 1px solid #cfd6dd;
+}
+
+.placement-fields select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+.placement-fields button {
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.placement-fields button:hover {
+  background: #1f2937;
+  transform: translateY(-1px);
+}
+
+/* ================= RIGHT ================= */
+
+.placement-results {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.placement-results-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* advisor items compact */
+.advisor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  background: #f9fafb;
+
+  transition: 0.15s ease;
+}
+
+.advisor-item:hover {
+  background: #eef2f7;
+}
+
+.advisor-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.advisor-rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #111827;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.advisor-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+}
+
+.advisor-score {
+  font-weight: 600;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.advisor-reason {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+
+
