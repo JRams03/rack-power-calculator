@@ -31,6 +31,47 @@ import {
 } from "../core/calculator.js";
 
 /* =========================================================
+   AUTO LOAD RACK FROM EXPLORER
+   ========================================================= */
+
+const urlParams = new URLSearchParams(window.location.search);
+const rackFromUrl = urlParams.get("rack");
+
+const storedRack = localStorage.getItem("pdu_selected_rack");
+
+// Prioriteit: URL → localStorage
+const selectedRack = rackFromUrl || storedRack;
+
+if (selectedRack) {
+
+  const rackDataRaw = localStorage.getItem("pdu_selected_rack_data");
+
+  if (rackDataRaw) {
+
+    const rackData = JSON.parse(rackDataRaw);
+
+    // reset bestaande state
+    appState.slots = {};
+
+    rackData.forEach(server => {
+
+      if (!server.slot) return;
+
+      const profile = servers.find(s =>
+        server.motherboard?.toLowerCase().includes(
+          s.baseId?.toLowerCase()
+        )
+      );
+
+      if (!profile) return;
+
+      setSlot(server.slot, profile.id);
+    });
+
+  }
+}
+
+/* =========================================================
    CONFIGURATION
    ========================================================= */
 
@@ -1295,10 +1336,51 @@ function suggestBestSlot(serverId, banks, phases) {
  * and UI bindings.
  */
 
+window.addEventListener("DOMContentLoaded", async () => {
 
-window.addEventListener("DOMContentLoaded",async()=>{
   await loadLayout("eaton");
+
+  /* ==========================================
+     AUTO LOAD RACK FROM SERVERROOM EXPLORER
+     ========================================== */
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const rackFromUrl = urlParams.get("rack");
+  const storedRack = localStorage.getItem("pdu_selected_rack");
+
+  const selectedRack = rackFromUrl || storedRack;
+
+  if (selectedRack) {
+
+    const rackDataRaw = localStorage.getItem("pdu_selected_rack_data");
+
+    if (rackDataRaw) {
+
+      const rackData = JSON.parse(rackDataRaw);
+
+      // reset state
+      appState.slots = {};
+
+      rackData.forEach(server => {
+
+        if (!server.slot) return;
+
+        const profile = servers.find(s =>
+          server.motherboard?.toLowerCase().includes(
+            s.baseId?.toLowerCase()
+          )
+        );
+
+        if (!profile) return;
+
+        setSlot(server.slot, profile.id);
+      });
+    }
+  }
+
+  // 🔥 Nu pas renderen
   render();
+
   document.body.classList.add("page-loaded");
 });
 
