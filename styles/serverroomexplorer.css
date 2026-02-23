@@ -361,11 +361,19 @@ grid-template-columns:
 }
 
 .status-box {
+  transition: all 0.15s ease;
   padding: 6px 10px;
   border-radius: 4px;
   font-size: 13px;
   font-weight: 600;
   color: #fff;
+}
+
+.status-box.active-filter {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
 .status-box span {

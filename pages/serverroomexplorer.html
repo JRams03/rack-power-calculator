@@ -156,7 +156,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 const MAX_SLOTS = 44;
 const BANK_LIMIT = 8;
 const PHASE_LIMIT = 16;
-let activeStatusFilter = null;
+let activeStatusFilters = new Set();
 const STATUS_SHORT = {
   ACTIVE: "A",
   RESERVED: "R",
@@ -688,8 +688,8 @@ function renderRooms() {
       (!filters.driveGeneric || resolveDriveEntries(s.drives).map(e => buildDriveLabel(e)).includes(filters.driveGeneric)) &&
       (!filters.drives || extractHardwareModels(s.drives).includes(filters.drives)) &&
       (!filters.height || height === filters.height) &&
-      (!activeStatusFilter || (s.status || "").toUpperCase().replace(/\s+/g, "_") === activeStatusFilter)
-    );
+      (activeStatusFilters.size === 0 ||activeStatusFilters.has((s.status || "").toUpperCase().replace(/\s+/g, "_"))) === activeStatusFilter)
+    
   });
 
   populateFilters(filtered.length ? filtered : rackServers);
@@ -1316,7 +1316,7 @@ function renderStatusOverview(data) {
 
 ${sortedStatuses.map(status => `
   <div 
-    class="status-box status-${status} ${activeStatusFilter === status ? "active-filter" : ""}"
+    class="status-box status-${status} ${activeStatusFilters.has(status) ? "active-filter" : ""}
     data-status="${status}"
   >
     ${status.replace(/_/g, " ")}
@@ -1331,11 +1331,11 @@ ${sortedStatuses.map(status => `
     const clickedStatus = el.dataset.status;
 
     // toggle gedrag
-    if (activeStatusFilter === clickedStatus) {
-      activeStatusFilter = null;
-    } else {
-      activeStatusFilter = clickedStatus;
-    }
+if (activeStatusFilters.has(clickedStatus)) {
+  activeStatusFilters.delete(clickedStatus);
+} else {
+  activeStatusFilters.add(clickedStatus);
+}
 
     renderRooms(); // alles opnieuw renderen
   };
