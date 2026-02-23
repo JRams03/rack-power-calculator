@@ -1321,7 +1321,7 @@ function renderStatusOverview(data) {
 
 ${sortedStatuses.map(status => `
   <div 
-    class="status-box status-${status} ${activeStatusFilters.has(status) ? "active-filter" : ""}
+    class="status-box status-${status} ${activeStatusFilters.has(status) ? "active-filter" : ""}"data-status="${status}"
     data-status="${status}"
   >
     ${status.replace(/_/g, " ")}
