@@ -36,9 +36,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 <div class="control-group">
   <div class="control-title">Data & Search</div>
   <div class="control-row">
-
+    <button id="clearMemory">Clear Saved CSV</button>
     <input type="file" id="csvInput" accept=".csv">
-
+    
     <input
       type="text"
       id="searchInput"
@@ -494,7 +494,20 @@ function buildPlacementExplanation(s) {
 
 function init() {
 
-   let rackServers = [];
+  let rackServers = [];
+
+
+// 🔹 Check of er opgeslagen CSV is
+const savedCsv = localStorage.getItem("serverroom_csv");
+
+if (savedCsv) {
+  rackServers = parseCSV(savedCsv);
+  populateFilters(rackServers);
+  renderRooms();
+  populatePlacementRooms(rackServers);
+}
+
+  
 
   
   populatePlacementServers();
@@ -513,17 +526,29 @@ document.getElementById("clearFilters")
 
   document.getElementById("csvInput").addEventListener("change", e => {
     const reader = new FileReader();
-    reader.onload = evt => {
-      rackServers = parseCSV(evt.target.result);
-      populateFilters(rackServers);
-      renderRooms();
-      populatePlacementRooms(rackServers);
-    };
+reader.onload = evt => {
+
+  const rawCsv = evt.target.result;
+
+  // 🔹 Sla CSV op in browser geheugen
+  localStorage.setItem("serverroom_csv", rawCsv);
+
+  rackServers = parseCSV(rawCsv);
+  populateFilters(rackServers);
+  renderRooms();
+  populatePlacementRooms(rackServers);
+};
     reader.readAsText(e.target.files[0]);
   });
 
   document.getElementById("searchInput")
     .addEventListener("input", renderRooms);
+
+    document.getElementById("clearMemory")
+  ?.addEventListener("click", () => {
+    localStorage.removeItem("serverroom_csv");
+    location.reload();
+});
 
 
  /**********************************************************************************************/
