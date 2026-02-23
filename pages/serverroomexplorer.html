@@ -83,7 +83,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       <option value="">Drive Model</option>
     </select>
 
-    <button id="clearFilters">Clear</button>
+    <button id="clearFilters">Reset</button>
 
   </div>
 </div>
@@ -109,9 +109,13 @@ window.addEventListener("DOMContentLoaded", async () => {
         <option value="">Select Room</option>
       </select>
 
-      <button id="placementSearchBtn">
-        Search Best Location
-      </button>
+<button id="placementSearchBtn">
+  Search Best Location
+</button>
+
+<button id="placementResetBtn" class="placement-reset-btn">
+  Reset
+</button>
     </div>
   </div>
 
@@ -497,12 +501,12 @@ function init() {
 
   /* ================= FILTER LISTENERS ================= */
 
-  document.querySelectorAll(".hardware-filter select")
+  document.querySelectorAll("#content select")
     .forEach(select => select.addEventListener("change", renderRooms));
 
 document.getElementById("clearFilters")
   .addEventListener("click", () => {
-    document.querySelectorAll(".hardware-filter select")
+    document.querySelectorAll("#content select")
       .forEach(s => s.value = "");
     renderRooms();
   });
@@ -741,12 +745,9 @@ function renderRooms() {
   // Default selectie
   allBtn.click();
 
-  // ================= PLACEMENT TEST =================
+
 
 const allRacks = buildAllRacks(filtered);
-
-
-
 
 document.getElementById("placementSearchBtn")
   .addEventListener("click", () => {
@@ -779,8 +780,23 @@ document.getElementById("placementSearchBtn")
     renderPlacementAdvisor(suggestions);
 });
 
-}
 
+// 🔹 RESET BUTTON
+document.getElementById("placementResetBtn")
+  .addEventListener("click", () => {
+
+    // reset dropdowns
+    document.getElementById("placementServerSelect").value = "";
+    document.getElementById("placementRoomSelect").value = "";
+
+    // clear results
+    const container = document.getElementById("placementAdvisor");
+    if (container) {
+      container.innerHTML = "";
+    }
+
+});
+}
 
  /**********************************************************************************************/
 
