@@ -720,7 +720,7 @@ function renderRooms() {
 
     allBtn.classList.add("active");
     renderAllRooms(filtered);
-    renderStatusOverview(filtered);
+    renderStatusOverview(rackServers);
   };
 
   container.appendChild(allBtn);
@@ -741,7 +741,7 @@ function renderRooms() {
       const roomData = filtered.filter(s => s.room === room);
 
       renderRacks(filtered, room);
-      renderStatusOverview(roomData);
+      renderStatusOverview(rackServers);
     };
 
     container.appendChild(btn);
