@@ -1301,11 +1301,11 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await loadLayout("eaton");
 
-  // 🔹 Eerst renderen zodat slots worden opgebouwd
+  // 🔥 ALTIJD eerst basis render
   render();
 
   /* ==========================================
-     AUTO LOAD RACK
+     AUTO LOAD (optioneel)
   ========================================== */
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -1340,7 +1340,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         blockSlots(server.slot, profile.uHeight ?? 1);
       });
 
-      // 🔥 nu opnieuw renderen met data
+      // 🔥 render opnieuw met data
       render();
     }
   }
