@@ -1,6 +1,19 @@
 import { calculateRack } from "./eatoncalculator.js";
 import { POLICY } from "./rackAnalysis.js";
 
+function isSlotAllowedByHeightPolicy(slot, uHeight) {
+
+  // 1 = bovenin, 44 = onderin
+
+  // 2U mag niet starten boven slot 17
+  if (uHeight === 2 && slot < 17) return false;
+
+  // 4U mag niet starten boven slot 23
+  if (uHeight === 4 && slot < 23) return false;
+
+  return true;
+}
+
 export function suggestBestSlot(serverProfile, rackServers) {
 
   if (!serverProfile) {
@@ -14,6 +27,16 @@ export function suggestBestSlot(serverProfile, rackServers) {
   let best = null;
 
   for (let slot = 1; slot <= TOTAL_SLOTS; slot++) {
+
+  // 🔹 Policy: geen zware servers bovenin
+  if (!isSlotAllowedByHeightPolicy(slot, uHeight)) {
+    continue;
+  }
+
+  // 🔹 Onderin niet over rack heen lopen
+  if (slot + uHeight - 1 > TOTAL_SLOTS) {
+    continue;
+  }
 
     // 1️⃣ Check fysieke overlap
     const overlap = rackServers.some(s => {
