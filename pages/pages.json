@@ -14,9 +14,10 @@
   { "id": "servers", "title": "Servers", "path": "/pages/servers.html" },
 
    {
-    "group": "Calculators",
+    "group": "Pages",
     "items": [
-      { "id": "server", "title": "Server Power Calculator", "path": "/pages/server-power-calculator.html" }
+      { "id": "server", "title": "Server Power Calculator", "path": "/pages/server-power-calculator.html" },
+      { "id": "serveroomexplorer", "title": "ServerRoom Viewer", "path": "/pages/serverroomexplorer.html" }
     ]
   },
 
