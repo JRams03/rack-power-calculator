@@ -28,7 +28,7 @@ import { analyzeRack, calculateRackPenalty } from "./rackAnalysis.js";
 export function suggestBestPlacement(
   serverProfile,
   allRacks,
-  suggestBestSlotFn
+  suggestBestSlotFn,
   selectedRoom
 
 ) {
