@@ -484,6 +484,7 @@ function buildAllRacks(filteredServers) {
 
     result.push({
       rackId,
+      room: servers[0].room,
       servers: structuredServers,
       banks: powerResult.banks,
       phases: powerResult.phases

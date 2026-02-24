@@ -22,10 +22,16 @@ import { analyzeRack, calculateRackPenalty } from "./rackAnalysis.js";
  *
  * @returns {Array} top 3 rack suggestions
  */
+
+const racksToEvaluate = selectedRoom
+  ? allRacks.filter(r => r.room === selectedRoom)
+  : allRacks;
+
 export function suggestBestPlacement(
   serverProfile,
   allRacks,
-  suggestBestSlotFn
+  suggestBestSlotFn,
+  selectedRoom 
 ) {
 
   const results = [];
