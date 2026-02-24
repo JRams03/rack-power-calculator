@@ -1009,6 +1009,8 @@ function highlightSuggestedSlots(startSlot, uHeight) {
   const resetServersBtn = document.getElementById("resetServers");
   if (resetServersBtn) {
     resetServersBtn.onclick = () => resetServers();
+    sessionStorage.removeItem("eaton_selected_rack");
+    sessionStorage.removeItem("eaton_selected_rack_data");
   }
 
   const resetUtilBtn = document.getElementById("resetUtil");
@@ -1301,12 +1303,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await loadLayout("eaton");
 
-  // 🔹 Basis render
+  // 🔹 Eerste basis render
   render();
 
-  /* ===============================
-     AUTO LOAD (EATON ONLY)
-  =============================== */
+  /* ==========================================
+     AUTO LOAD FROM EXPLORER (SESSION STORAGE)
+  ========================================== */
 
   const urlParams = new URLSearchParams(window.location.search);
   const rackFromUrl = urlParams.get("rack");
@@ -1321,6 +1323,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (rackDataRaw) {
 
       const rackData = JSON.parse(rackDataRaw);
+
+      /* ===============================
+         1️⃣ Inject servers into rack
+      =============================== */
 
       rackData.forEach(server => {
 
@@ -1339,6 +1345,29 @@ window.addEventListener("DOMContentLoaded", async () => {
 
         blockSlots(server.slot, profile.uHeight ?? 1);
       });
+
+      /* ===============================
+         2️⃣ Fill rackMeta (DC – SR – RK)
+      =============================== */
+
+      const rackMatch = selectedRack.match(/\d+/);
+      const rackNumber = rackMatch ? rackMatch[0] : "";
+
+      let roomNumber = "";
+      let dcNumber = "";
+
+      if (rackData.length > 0) {
+        roomNumber = rackData[0].room?.replace(/\D/g, "") || "";
+        dcNumber = rackData[0].dc || "DC1"; // fallback
+      }
+
+      rackMeta.dc = dcNumber;
+      rackMeta.sr = roomNumber ? `SR${roomNumber}` : "";
+      rackMeta.rk = rackNumber ? `RK${rackNumber}` : "";
+
+      /* ===============================
+         3️⃣ Re-render with loaded data
+      =============================== */
 
       render();
     }
