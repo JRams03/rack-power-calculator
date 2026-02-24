@@ -383,6 +383,7 @@ grid-template-columns:
   color: #fff;
 }
 
+.status-box.status-TOTAL { background: var(--total); color: #fff; }
 .status-box.status-ACTIVE { background: var(--active); }
 .status-box.status-RESERVED { background: var(--reserved); }
 .status-box.status-PLANNED { background: var(--planned); }
