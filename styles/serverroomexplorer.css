@@ -450,9 +450,53 @@ grid-template-columns:
    ========================================================= */
 
 .rack-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 12px;
+}
+
+.rack-header-right {
+  display: flex;
+  gap: 10px;
+}
+
+.pdu-launch-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.pdu-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.pdu-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+/* Individuele kleuren */
+.pdu-btn.eaton {
+  background: #005eb8;
+  color: white;
+}
+
+.pdu-btn.servertech {
+  background: #2d3748;
+  color: white;
+}
+
+.pdu-btn.apc {
+  background: #16a34a;
+  color: white;
 }
 
 

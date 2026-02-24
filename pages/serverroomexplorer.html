@@ -189,13 +189,19 @@ function showPduButton() {
   const container = document.getElementById("pduLaunchContainer");
   if (!container || !selectedRackId) return;
 
-  container.innerHTML = `
-    <div class="pdu-launch-wrapper">
-      <button class="pdu-btn" data-type="eaton">View in Eaton</button>
-      <button class="pdu-btn" data-type="servertech">View in ServerTech</button>
-      <button class="pdu-btn" data-type="apc">View in APC</button>
-    </div>
-  `;
+ container.innerHTML = `
+  <div class="pdu-launch-wrapper">
+    <button class="pdu-btn eaton" data-type="eaton">
+     View in Eaton
+    </button>
+    <button class="pdu-btn servertech" data-type="servertech">
+     View in ServerTech
+    </button>
+    <button class="pdu-btn apc" data-type="apc">
+     View in APC
+    </button>
+  </div>
+`;
 
   container.querySelectorAll(".pdu-btn").forEach(btn => {
 btn.onclick = () => {
@@ -1184,7 +1190,11 @@ function renderUnassignedDetail(list) {
 
  container.innerHTML = `
   <div class="rack-detail-header">
-    ${formatRackDisplay(rack)}
+    <div class="rack-header-left">
+      ${formatRackDisplay(rack)}
+    </div>
+
+    <div class="rack-header-right" id="pduLaunchContainer"></div>
   </div>
     <div class="slot-row header">
       <div>#</div>
