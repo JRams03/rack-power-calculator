@@ -236,15 +236,16 @@ function statusClass(status) {
 function cleanBoardName(full) {
   if (!full) return "";
 
-  const lenovoMatch = full.match(/SR\d{3}/i);
+  // Lenovo SR modellen inclusief -V2/-V3 etc
+  const lenovoMatch = full.match(/SR\d{3}(?:-[A-Z0-9]+)?/i);
   if (lenovoMatch) return lenovoMatch[0];
 
+  // Supermicro X-serie
   const smMatch = full.match(/(X\d{2}[A-Z0-9\-\+]+)/i);
   if (smMatch) return smMatch[0];
 
   return full.split(" ")[1] ?? full;
 }
-
  /**********************************************************************************************/
 
 function findServerProfile(boardName) {
