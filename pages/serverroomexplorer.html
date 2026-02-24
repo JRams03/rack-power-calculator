@@ -1170,8 +1170,10 @@ function renderUnassignedDetail(list) {
 
   const container = document.getElementById("rackDetail");
 
-  container.innerHTML = `
-    <div class="rack-detail-header">${rack}</div>
+ container.innerHTML = `
+  <div class="rack-detail-header">
+    ${formatRackDisplay(rack)}
+  </div>
     <div class="slot-row header">
       <div>#</div>
       <div>Status</div>
@@ -1548,11 +1550,14 @@ document.querySelectorAll(".advisor-item").forEach(el => {
 
     rackCard.click();
 
-    rackCard.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
+const detail = document.getElementById("rackDetail");
+
+if (detail) {
+  detail.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
     });
-  };
+  }};
 });
 }
 
