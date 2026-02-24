@@ -916,6 +916,12 @@ grid-template-columns:
   gap: 14px;
 }
 
+.advisor-item.active-result {
+  border: 2px solid #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  transition: 0.2s ease;
+}
+
 .advisor-rank {
   width: 26px;
   height: 26px;

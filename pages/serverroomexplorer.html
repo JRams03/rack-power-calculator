@@ -524,7 +524,19 @@ function buildPlacementExplanation(s) {
 
  /**********************************************************************************************/
 
+function formatRackDisplay(rackId) {
 
+  if (!rackId) return "Unknown Rack";
+
+  const match = rackId.match(/(\w+)-?RK?(\d+)/i);
+
+  if (!match) return rackId;
+
+  const room = match[1];
+  const rack = match[2];
+
+  return `Server Room ${room.replace(/\D/g, "")} - Rack ${rack}`;
+}
 
 /* ========================= MAIN ========================= */
 
@@ -1496,8 +1508,8 @@ function renderPlacementAdvisor(suggestions) {
               <div class="advisor-rank">${medal}</div>
 
               <div class="advisor-info">
-                <strong>${s.rackId}</strong>
-                <span>Slot ${s.slot}</span>
+              ${formatRackDisplay(s.rackId)}
+              <span>Slot ${s.slot}</span>
 
                 <div class="advisor-reason">
                   ${explanation}
@@ -1516,21 +1528,33 @@ function renderPlacementAdvisor(suggestions) {
     </div>
   `;
 
-  document.querySelectorAll(".advisor-item").forEach(el => {
-    el.onclick = () => {
-      const rackId = el.dataset.rack;
+document.querySelectorAll(".advisor-item").forEach(el => {
 
-      const rackCard = [...document.querySelectorAll(".rack-card")]
-        .find(card => card.innerText.includes(rackId));
+  el.onclick = () => {
 
-      if (rackCard) {
-        rackCard.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-      }
-    };
-  });
+    // 🔹 highlight selected suggestion
+    document.querySelectorAll(".advisor-item")
+      .forEach(x => x.classList.remove("active-result"));
+
+    el.classList.add("active-result");
+
+    const rackId = el.dataset.rack;
+
+    const rackCard = [...document.querySelectorAll(".rack-card")]
+      .find(card => card.innerText.includes(rackId));
+
+    if (!rackCard) return;
+
+    // 🔹 open rack detail (simulate click)
+    rackCard.click();
+
+    // 🔹 scroll to rack
+    rackCard.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  };
+});
 }
 
 // ================= BACK TO TOP =================
