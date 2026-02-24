@@ -206,21 +206,16 @@ btn.onclick = () => {
     s => s.rack === selectedRackId
   );
 
-  sessionStorage.setItem(
-    `${type}_selected_rack`,
-    selectedRackId
-  );
+sessionStorage.setItem(`${type}_selected_rack`, selectedRackId);
+sessionStorage.setItem(`${type}_selected_rack_data`,JSON.stringify(currentRackServers));
 
-  sessionStorage.setItem(
-    `${type}_selected_rack_data`,
-    JSON.stringify(rackData)
-  );
-
-  window.location.href =
-    `${type}.html?rack=${selectedRackId}`;
-};
+      // doorsturen
+window.location.href =
+  `${type}.html?rack=${selectedRackId}`;
+    };
   });
 }
+
 
 
  /**********************************************************************************************/

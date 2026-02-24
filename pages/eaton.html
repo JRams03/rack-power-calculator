@@ -1306,21 +1306,20 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await loadLayout("eaton");
 
-  // 🔹 Basis render
+  // 🔥 Eerst lege render (maakt slots aan)
   render();
 
-  /* ===============================
-     AUTO LOAD (EATON ONLY)
-  =============================== */
-
+  /* AUTO LOAD */
   const urlParams = new URLSearchParams(window.location.search);
   const rackFromUrl = urlParams.get("rack");
+  
 
   const storedRack = sessionStorage.getItem("eaton_selected_rack");
   const selectedRack = rackFromUrl || storedRack;
 
   if (selectedRack) {
 
+    
     const rackDataRaw = sessionStorage.getItem("eaton_selected_rack_data");
 
     if (rackDataRaw) {
@@ -1348,7 +1347,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       render();
     }
   }
-
 
 
   document.body.classList.add("page-loaded");
