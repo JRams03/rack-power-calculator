@@ -998,8 +998,7 @@ function highlightSuggestedSlots(startSlot, uHeight) {
   const resetServersBtn = document.getElementById("resetServers");
   if (resetServersBtn) {
     resetServersBtn.onclick = () => resetServers();
-    sessionStorage.removeItem("servertech_selected_rack");
-    sessionStorage.removeItem("servertech_selected_rack_data");
+    
   }
 
   const resetUtilBtn = document.getElementById("resetUtil");

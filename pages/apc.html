@@ -957,8 +957,6 @@ function bindUIActions(banks, phases) {
   const resetServersBtn = document.getElementById("resetServers");
   if (resetServersBtn) {
     resetServersBtn.onclick = () => resetServers();
-    sessionStorage.removeItem("apc_selected_rack");
-    sessionStorage.removeItem("apc_selected_rack_data");
   }
 
   const resetUtilBtn = document.getElementById("resetUtil");
@@ -1203,6 +1201,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       render();
     }
   }
+
+
 
   document.body.classList.add("page-loaded");
 });
