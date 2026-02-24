@@ -567,6 +567,69 @@ if (savedCsv) {
 
   /* ================= FILTER LISTENERS ================= */
 
+const serverSelect = document.getElementById("placementServerSelect");
+const roomSelect   = document.getElementById("placementRoomSelect");
+const searchBtn    = document.getElementById("placementSearchBtn");
+const resetBtn     = document.getElementById("placementResetBtn");
+
+function updatePlacementButton() {
+  searchBtn.disabled = !serverSelect.value || !roomSelect.value;
+}
+
+serverSelect.addEventListener("change", () => {
+  serverSelect.classList.remove("field-error");
+  updatePlacementButton();
+});
+
+roomSelect.addEventListener("change", () => {
+  roomSelect.classList.remove("field-error");
+  updatePlacementButton();
+});
+
+searchBtn.addEventListener("click", () => {
+
+  if (!serverSelect.value) {
+    serverSelect.classList.add("field-error");
+    return;
+  }
+
+  if (!roomSelect.value) {
+    roomSelect.classList.add("field-error");
+    return;
+  }
+
+  const profile = SERVER_PROFILES.find(
+    s => s.id === serverSelect.value
+  );
+
+  if (!profile) return;
+
+  const normalizedRoom = roomSelect.value.trim().toUpperCase();
+
+  const baseData = rackServers.filter(s =>
+    s.room?.trim().toUpperCase() === normalizedRoom
+  );
+
+  const allRacks = buildAllRacks(baseData);
+
+  const suggestions = suggestBestPlacement(
+    profile,
+    allRacks,
+    suggestBestSlot
+  );
+
+  renderPlacementAdvisor(suggestions);
+});
+
+resetBtn.addEventListener("click", () => {
+  serverSelect.value = "";
+  roomSelect.value = "";
+  document.getElementById("placementAdvisor").innerHTML = "";
+  updatePlacementButton();
+});
+
+updatePlacementButton();
+
   document.querySelectorAll("#content select")
     .forEach(select => select.addEventListener("change", renderRooms));
 
@@ -767,12 +830,12 @@ function renderRooms() {
       (!filters.drives || extractHardwareModels(s.drives).includes(filters.drives)) &&
       (!filters.height || height === filters.height) &&
       (
-  activeStatusFilters.size === 0 ||
-  activeStatusFilters.has(
-    (s.status || "").toUpperCase().replace(/\s+/g, "_")
-  )
-  ))
-    
+        activeStatusFilters.size === 0 ||
+        activeStatusFilters.has(
+          (s.status || "").toUpperCase().replace(/\s+/g, "_")
+        )
+      )
+    );
   });
 
   populateFilters(filtered.length ? filtered : rackServers);
@@ -785,8 +848,6 @@ function renderRooms() {
 
   const container = document.getElementById("rooms");
   container.innerHTML = "";
-
-  // ================= ALL BUTTON =================
 
   const allBtn = document.createElement("div");
   allBtn.className = "room-btn";
@@ -803,8 +864,6 @@ function renderRooms() {
 
   container.appendChild(allBtn);
 
-  // ================= NORMAL ROOMS =================
-
   rooms.forEach(room => {
 
     const btn = document.createElement("div");
@@ -816,7 +875,6 @@ function renderRooms() {
         .forEach(b => b.classList.remove("active"));
 
       btn.classList.add("active");
-      const roomData = filtered.filter(s => s.room === room);
 
       renderRacks(filtered, room);
       renderStatusOverview(rackServers);
@@ -825,71 +883,7 @@ function renderRooms() {
     container.appendChild(btn);
   });
 
-  // Default selectie
   allBtn.click();
-
-
-
-const allRacks = buildAllRacks(filtered);
-
-document.getElementById("placementSearchBtn")
-  .addEventListener("click", () => {
-
-    const serverId = document.getElementById("placementServerSelect").value;
-const room = document.getElementById("placementRoomSelect").value;
-
-console.log("Selected room from dropdown:", room);
-    const profile = SERVER_PROFILES.find(s => s.id === serverId);
-    if (!profile) return;
-
-const normalizedRoom = room.trim().toUpperCase();
-
-const baseData = rackServers.filter(s =>
-  s.room?.trim().toUpperCase() === normalizedRoom
-);
-
-console.log(
-  "Rooms inside baseData:",
-  [...new Set(baseData.map(s => s.room))]
-);
-
-    const allRacks = buildAllRacks(baseData);
-
-console.log(
-  "Rooms inside allRacks:",
-  [...new Set(allRacks.map(r => r.room))]
-);
-
-console.log(
-  "Racks sent to advisor:",
-  allRacks.map(r => `${r.room}-${r.rackId}`)
-);
-
-    const suggestions = suggestBestPlacement(
-      profile,
-      allRacks,
-      suggestBestSlot
-    );
-
-    renderPlacementAdvisor(suggestions);
-});
-
-
-// 🔹 RESET BUTTON
-document.getElementById("placementResetBtn")
-  .addEventListener("click", () => {
-
-    // reset dropdowns
-    document.getElementById("placementServerSelect").value = "";
-    document.getElementById("placementRoomSelect").value = "";
-
-    // clear results
-    const container = document.getElementById("placementAdvisor");
-    if (container) {
-      container.innerHTML = "";
-    }
-
-});
 }
 
  /**********************************************************************************************/
@@ -1367,7 +1361,6 @@ function renderStatusOverview(data) {
   const container = document.getElementById("statusOverview");
   if (!container) return;
 
-  // 🔹 Definieer vaste volgorde
   const STATUS_ORDER = [
     "ACTIVE",
     "RESERVED",
@@ -1384,7 +1377,6 @@ function renderStatusOverview(data) {
 
   const stats = {};
 
-  // 🔹 Tellen
   data.forEach(s => {
     const status = (s.status || "")
       .toUpperCase()
@@ -1398,7 +1390,6 @@ function renderStatusOverview(data) {
 
   const total = data.length;
 
-  // 🔹 Sorteren op vaste volgorde
   const sortedStatuses = Object.keys(stats)
     .sort((a, b) => {
       const aIndex = STATUS_ORDER.indexOf(a);
@@ -1411,87 +1402,36 @@ function renderStatusOverview(data) {
       return aIndex - bIndex;
     });
 
-  // 🔹 Renderen
   container.innerHTML = `
     <div class="status-box total-box">
       TOTAL <span>${total}</span>
     </div>
 
-${sortedStatuses.map(status => `
-  <div 
-    class="status-box status-${status} ${activeStatusFilters.has(status) ? "active-filter" : ""}"data-status="${status}"
-    data-status="${status}"
-  >
-    ${status.replace(/_/g, " ")}
-    <span>${stats[status]}</span>
-  </div>
-`).join("")}
+    ${sortedStatuses.map(status => `
+      <div 
+        class="status-box status-${status} ${activeStatusFilters.has(status) ? "active-filter" : ""}"
+        data-status="${status}"
+      >
+        ${status.replace(/_/g, " ")}
+        <span>${stats[status]}</span>
+      </div>
+    `).join("")}
   `;
 
   document.querySelectorAll(".status-box[data-status]").forEach(el => {
-  el.onclick = () => {
+    el.onclick = () => {
 
-    const clickedStatus = el.dataset.status;
+      const clickedStatus = el.dataset.status;
 
-    // toggle gedrag
-if (activeStatusFilters.has(clickedStatus)) {
-  activeStatusFilters.delete(clickedStatus);
-} else {
-  activeStatusFilters.add(clickedStatus);
-}
+      if (activeStatusFilters.has(clickedStatus)) {
+        activeStatusFilters.delete(clickedStatus);
+      } else {
+        activeStatusFilters.add(clickedStatus);
+      }
 
-renderRooms();
-
-const serverSelect = document.getElementById("placementServerSelect");
-const roomSelect   = document.getElementById("placementRoomSelect");
-const searchBtn    = document.getElementById("placementSearchBtn");
-
-function updatePlacementButton() {
-  searchBtn.disabled = !serverSelect.value || !roomSelect.value;
-}
-
-function validateFields() {
-  let valid = true;
-
-  if (!serverSelect.value) {
-    serverSelect.classList.add("field-error");
-    valid = false;
-  }
-
-  if (!roomSelect.value) {
-    roomSelect.classList.add("field-error");
-    valid = false;
-  }
-
-  return valid;
-}
-
-/* Remove error styling on change */
-serverSelect.addEventListener("change", () => {
-  serverSelect.classList.remove("field-error");
-  updatePlacementButton();
-});
-
-roomSelect.addEventListener("change", () => {
-  roomSelect.classList.remove("field-error");
-  updatePlacementButton();
-});
-
-/* Click handler */
-searchBtn.addEventListener("click", (e) => {
-
-  if (!validateFields()) {
-    e.preventDefault();
-    return;
-  }
-
-  // hier je bestaande placement logic
-});
-
-updatePlacementButton();
-
-  };
-});
+      renderRooms();
+    };
+  });
 }
 
  /**********************************************************************************************/
