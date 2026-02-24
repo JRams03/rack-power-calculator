@@ -1287,9 +1287,50 @@ function suggestBestSlot(serverId, banks, phases) {
  */
 
 
-window.addEventListener("DOMContentLoaded",async()=>{
+window.addEventListener("DOMContentLoaded", async () => {
+
   await loadLayout("servertech");
+
+  // 🔥 Eerst lege render (maakt slots aan)
   render();
+
+  /* AUTO LOAD */
+  const urlParams = new URLSearchParams(window.location.search);
+  const rackFromUrl = urlParams.get("rack");
+  const storedRack = localStorage.getItem("pdu_selected_rack");
+
+  const selectedRack = rackFromUrl || storedRack;
+
+  if (selectedRack) {
+
+    const rackDataRaw = localStorage.getItem("pdu_selected_rack_data");
+
+    if (rackDataRaw) {
+
+      const rackData = JSON.parse(rackDataRaw);
+
+      rackData.forEach(server => {
+
+        if (!server.slot) return;
+
+        const profile = servers.find(s =>
+          server.motherboard?.toLowerCase().includes(
+            s.baseId?.toLowerCase()
+          )
+        );
+
+        if (!profile) return;
+
+        setSlot(server.slot, "serverId", profile.id);
+        setSlot(server.slot, "utilization", DEFAULT_UTIL);
+
+        blockSlots(server.slot, profile.uHeight ?? 1);
+      });
+
+      render();
+    }
+  }
+
   document.body.classList.add("page-loaded");
 });
 
