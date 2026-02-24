@@ -878,6 +878,26 @@ grid-template-columns:
   transform: translateY(-1px);
 }
 
+/* Disabled button */
+.placement-fields button:disabled {
+  background: #9ca3af;      /* grijs */
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+/* Geen hover effect wanneer disabled */
+.placement-fields button:disabled:hover {
+  background: #9ca3af;
+  transform: none;
+}
+
+/* Error state */
+.placement-fields select.field-error {
+  border: 2px solid #e74c3c;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15);
+}
+
 /* ================= RIGHT ================= */
 
 .placement-results {
@@ -956,16 +976,5 @@ grid-template-columns:
   line-height: 1.4;
 }
 
-/* Disabled placement button */
-#placementSearchBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #1a2233; /* iets donkerder */
-}
 
-/* Error highlight */
-.field-error {
-  border: 2px solid #e74c3c !important;
-  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
-}
 
