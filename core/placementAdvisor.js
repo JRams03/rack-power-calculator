@@ -29,6 +29,7 @@ export function suggestBestPlacement(
   serverProfile,
   allRacks,
   suggestBestSlotFn
+  selectedRoom
 
 ) {
 
