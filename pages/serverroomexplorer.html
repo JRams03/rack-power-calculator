@@ -199,12 +199,13 @@ function showPduButton() {
   container.querySelectorAll(".pdu-btn").forEach(btn => {
     btn.onclick = () => {
 
-const type = btn.dataset.type;
+      const type = btn.dataset.type;
 
-sessionStorage.setItem(`${type}_selected_rack`, selectedRackId);
-sessionStorage.setItem(
-  `${type}_selected_rack_data`,
-  JSON.stringify(currentRackServers)
+      // Rack opslaan zodat andere pagina hem kan lezen
+      localStorage.setItem("pdu_selected_rack", selectedRackId);
+localStorage.setItem(
+  "pdu_selected_rack_data",
+  JSON.stringify(currentRackServers) // lijst van servers in dat rack
 );
 
       // doorsturen
