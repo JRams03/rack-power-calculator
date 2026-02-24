@@ -8,26 +8,22 @@ html {
    ========================================================= */
 
 :root {
+  --total: #111111;
   --active: #cc382e;
   --reserved: #f39c12;
   --planned: #8e44ad;
   --inventory: #2c9a5f;
-
   --liquidation: #6b7280;
   --quarantine: #f1c40f;
   --missing: #2980b9;
   --hardfail: #7f1d1d;
-
-  /* ===== NIEUWE ===== */
-
-  --reclaim: #009688;                 /* teal */
-  --deploy: #3f51b5;                  /* indigo */
-  --spare: #607d8b;                   /* slate */
-  --liquidate-prep: #ff5722;          /* deep orange */
-  --liquidation-processing: #795548;  /* brown */
-  --spare-pool: #00acc1;              /* cyan */
-  --deploy2: #e91e63;                 /* pink */
-
+  --reclaim: #009688;              
+  --deploy: #3f51b5;               
+  --spare: #607d8b;                 
+  --liquidate-prep: #ff5722;         
+  --liquidation-processing: #795548;  
+  --spare-pool: #00acc1;              
+  --deploy2: #e91e63;               
   --border-light: #e5e7eb;
   --border-dark: #d1d5db;
   --row-alt: #f9fafb;
@@ -390,7 +386,6 @@ grid-template-columns:
 .status-box.status-RESERVED { background: var(--reserved); }
 .status-box.status-PLANNED { background: var(--planned); }
 .status-box.status-INVENTORY { background: var(--inventory); }
-
 .status-box.status-LIQUIDATION { background: var(--liquidation); color:#fff; }
 .status-box.status-QUARANTINE { background: var(--quarantine); color:#000; }
 .status-box.status-MISSING_PARTS { background: var(--missing); }
