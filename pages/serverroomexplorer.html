@@ -893,8 +893,9 @@ function createRackCard({ title, rack, list }) {
     stats[status] = (stats[status] || 0) + 1;
   });
 
-  const card = document.createElement("div");
-  card.className = "rack-card";
+ const card = document.createElement("div");
+ card.className = "rack-card";
+ card.dataset.rack = rack;   // 🔥 essentieel
 
   card.innerHTML = `
     <div class="rack-title">${title}</div>
@@ -1532,7 +1533,6 @@ document.querySelectorAll(".advisor-item").forEach(el => {
 
   el.onclick = () => {
 
-    // 🔹 highlight selected suggestion
     document.querySelectorAll(".advisor-item")
       .forEach(x => x.classList.remove("active-result"));
 
@@ -1540,15 +1540,14 @@ document.querySelectorAll(".advisor-item").forEach(el => {
 
     const rackId = el.dataset.rack;
 
-    const rackCard = [...document.querySelectorAll(".rack-card")]
-      .find(card => card.innerText.includes(rackId));
+    const rackCard = document.querySelector(
+      `.rack-card[data-rack="${rackId}"]`
+    );
 
     if (!rackCard) return;
 
-    // 🔹 open rack detail (simulate click)
     rackCard.click();
 
-    // 🔹 scroll to rack
     rackCard.scrollIntoView({
       behavior: "smooth",
       block: "center"
