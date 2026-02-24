@@ -197,24 +197,23 @@ function showPduButton() {
   `;
 
   container.querySelectorAll(".pdu-btn").forEach(btn => {
-    btn.onclick = () => {
+btn.onclick = () => {
 
-      const type = btn.dataset.type;
+  const type = btn.dataset.type;
 
-      // 🔥 Gebruik sessionStorage
-      sessionStorage.setItem(
-        `${type}_selected_rack`,
-        selectedRackId
-      );
+  sessionStorage.setItem(
+    `${type}_selected_rack`,
+    selectedRackId
+  );
 
-      sessionStorage.setItem(
-        `${type}_selected_rack_data`,
-        JSON.stringify(currentRackServers)
-      );
+  sessionStorage.setItem(
+    `${type}_selected_rack_data`,
+    JSON.stringify(currentRackServers)
+  );
 
-      window.location.href =
-        `${type}.html?rack=${selectedRackId}`;
-    };
+  window.location.href =
+    `${type}.html?rack=${selectedRackId}`;
+};
   });
 }
 
