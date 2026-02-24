@@ -1301,22 +1301,22 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await loadLayout("eaton");
 
-  // 🔥 ALTIJD eerst basis render
+  // 🔹 Basis render
   render();
 
-  /* ==========================================
-     AUTO LOAD (optioneel)
-  ========================================== */
+  /* ===============================
+     AUTO LOAD (EATON ONLY)
+  =============================== */
 
   const urlParams = new URLSearchParams(window.location.search);
   const rackFromUrl = urlParams.get("rack");
-  const storedRack = localStorage.getItem("pdu_selected_rack");
 
+  const storedRack = sessionStorage.getItem("eaton_selected_rack");
   const selectedRack = rackFromUrl || storedRack;
 
   if (selectedRack) {
 
-    const rackDataRaw = localStorage.getItem("pdu_selected_rack_data");
+    const rackDataRaw = sessionStorage.getItem("eaton_selected_rack_data");
 
     if (rackDataRaw) {
 
@@ -1340,10 +1340,13 @@ window.addEventListener("DOMContentLoaded", async () => {
         blockSlots(server.slot, profile.uHeight ?? 1);
       });
 
-      // 🔥 render opnieuw met data
       render();
     }
   }
+
+  // 🔹 Optional cleanup (recommended)
+  sessionStorage.removeItem("eaton_selected_rack");
+  sessionStorage.removeItem("eaton_selected_rack_data");
 
   document.body.classList.add("page-loaded");
 });
