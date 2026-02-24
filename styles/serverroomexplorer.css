@@ -257,6 +257,7 @@ grid-template-columns:
   display: inline-block;
 }
 
+.status-TOTAL { background: var(--total); color: #fff; }
 .status-ACTIVE { background: var(--active); color: #fff; }
 .status-RESERVED { background: var(--reserved); color: #fff; }
 .status-PLANNED { background: var(--planned); color: #fff; }
