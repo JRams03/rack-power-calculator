@@ -1317,7 +1317,7 @@ function renderPowerSummary(rack, list) {
     const container = document.getElementById("powerSummary");
 
 container.innerHTML = `
-  <div class="rack-detail-header">${rack}</div>
+  <div class="rack-detail-header">${formatRackDisplay(rack)}</div>
 
   <div class="power-card ${usageClass(totalAmp, PHASE_LIMIT * 3)}">
     <div class="power-title">Total Design Load</div>
@@ -1505,7 +1505,7 @@ function renderPlacementAdvisor(suggestions) {
         const explanation = buildPlacementExplanation(s);
 
         return `
-          <div class="advisor-item ${safetyClass}" data-rack="${formatRackDisplay(rack)}">
+          <div class="advisor-item ${safetyClass}" data-rack="${s.rackId}">
             
             <div class="advisor-left">
               <div class="advisor-rank">${medal}</div>
