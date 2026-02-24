@@ -549,9 +549,6 @@ function formatRackDisplay(rackId) {
 
 function init() {
 
-  let rackServers = [];
-
-
 // 🔹 Check of er opgeslagen CSV is
 const savedCsv = localStorage.getItem("serverroom_csv");
 
@@ -842,7 +839,11 @@ document.getElementById("placementSearchBtn")
     const profile = SERVER_PROFILES.find(s => s.id === serverId);
     if (!profile) return;
 
-const baseData = rackServers.filter(s => s.room === room);
+const normalizedRoom = room.trim().toUpperCase();
+
+const baseData = rackServers.filter(s =>
+  s.room?.trim().toUpperCase() === normalizedRoom
+);
 
     const allRacks = buildAllRacks(baseData);
 
