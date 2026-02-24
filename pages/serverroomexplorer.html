@@ -27,6 +27,7 @@ import { suggestBestSlot } from "/rack-power-calculator/core/slotAdvisor.js";
 
 let selectedRackId = null;
 let currentRackServers = [];
+let rackServers = [];
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("serverroom");
