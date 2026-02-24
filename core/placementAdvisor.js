@@ -35,7 +35,7 @@ export function suggestBestPlacement(
   const racksToEvaluate = selectedRoom
   ? allRacks.filter(r => r.room === selectedRoom)
   : allRacks;
-  
+
   const results = [];
 
   for (const rack of allRacks) {
@@ -70,14 +70,15 @@ export function suggestBestPlacement(
       rackPenalty * 0.4 +
       slotScore * 0.6;
 
-    results.push({
-      rackId: rack.rackId,
-      slot: slotSuggestion.slot,
-      rackPenalty,
-      slotScore,
-      finalScore,
-      rackAnalysis
-    });
+   results.push({
+  rackId: rack.rackId,
+  room: rack.room,   
+  slot: slotSuggestion.slot,
+  rackPenalty,
+  slotScore,
+  finalScore,
+  rackAnalysis
+});
   }
 
   // 5️⃣ Sort ascending (lower score = better)

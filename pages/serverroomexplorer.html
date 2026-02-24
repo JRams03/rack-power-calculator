@@ -1575,7 +1575,7 @@ function renderPlacementAdvisor(suggestions) {
               <div class="advisor-rank">${medal}</div>
 
               <div class="advisor-info">
-              ${formatRackDisplay(s.rackId)}
+              Server Room ${s.room.replace(/\D/g,"")} - Rack ${s.rackId.match(/\d+/)?.[0]}
               <span>Slot ${s.slot}</span>
 
                 <div class="advisor-reason">
