@@ -201,16 +201,19 @@ function showPduButton() {
 
       const type = btn.dataset.type;
 
-      // Rack opslaan zodat andere pagina hem kan lezen
-      localStorage.setItem("pdu_selected_rack", selectedRackId);
-localStorage.setItem(
-  "pdu_selected_rack_data",
-  JSON.stringify(currentRackServers) // lijst van servers in dat rack
-);
+      // 🔥 Gebruik sessionStorage
+      sessionStorage.setItem(
+        `${type}_selected_rack`,
+        selectedRackId
+      );
 
-      // doorsturen
-window.location.href =
-  `${type}.html?rack=${selectedRackId}`;
+      sessionStorage.setItem(
+        `${type}_selected_rack_data`,
+        JSON.stringify(currentRackServers)
+      );
+
+      window.location.href =
+        `${type}.html?rack=${selectedRackId}`;
     };
   });
 }
