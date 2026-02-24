@@ -956,5 +956,16 @@ grid-template-columns:
   line-height: 1.4;
 }
 
+/* Disabled placement button */
+#placementSearchBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #1a2233; /* iets donkerder */
+}
 
+/* Error highlight */
+.field-error {
+  border: 2px solid #e74c3c !important;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
 
