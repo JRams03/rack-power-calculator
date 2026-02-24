@@ -1548,7 +1548,7 @@ document.querySelectorAll(".advisor-item").forEach(el => {
     const rackId = el.dataset.rack;
 
     const rackCard = document.querySelector(
-      `.rack-card[data-rack="${rackId}"]`
+      `.rack-card[data-rack="${formatRackDisplay(rack)}"]`
     );
 
     if (!rackCard) return;
