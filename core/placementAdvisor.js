@@ -28,8 +28,8 @@ import { analyzeRack, calculateRackPenalty } from "./rackAnalysis.js";
 export function suggestBestPlacement(
   serverProfile,
   allRacks,
-  suggestBestSlotFn,
-  selectedRoom 
+  suggestBestSlotFn
+
 ) {
 
   const racksToEvaluate = selectedRoom
@@ -38,7 +38,7 @@ export function suggestBestPlacement(
 
   const results = [];
 
-  for (const rack of allRacks) {
+  for (const rack of racksToEvaluate) {
 
     // 1️⃣ Rack-level analysis
     const rackServersForAnalysis = rack.servers.map(s => ({
