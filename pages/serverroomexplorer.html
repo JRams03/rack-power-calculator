@@ -201,6 +201,10 @@ btn.onclick = () => {
 
   const type = btn.dataset.type;
 
+  const rackData = rackServers.filter(
+    s => s.rack === selectedRackId
+  );
+
   sessionStorage.setItem(
     `${type}_selected_rack`,
     selectedRackId
@@ -208,7 +212,7 @@ btn.onclick = () => {
 
   sessionStorage.setItem(
     `${type}_selected_rack_data`,
-    JSON.stringify(currentRackServers)
+    JSON.stringify(rackData)
   );
 
   window.location.href =
