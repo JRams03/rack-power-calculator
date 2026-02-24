@@ -836,7 +836,9 @@ document.getElementById("placementSearchBtn")
   .addEventListener("click", () => {
 
     const serverId = document.getElementById("placementServerSelect").value;
-    const room     = document.getElementById("placementRoomSelect").value;
+const room = document.getElementById("placementRoomSelect").value;
+
+console.log("Selected room from dropdown:", room);
     const profile = SERVER_PROFILES.find(s => s.id === serverId);
     if (!profile) return;
 
@@ -846,7 +848,22 @@ const baseData = rackServers.filter(s =>
   s.room?.trim().toUpperCase() === normalizedRoom
 );
 
+console.log(
+  "Rooms inside baseData:",
+  [...new Set(baseData.map(s => s.room))]
+);
+
     const allRacks = buildAllRacks(baseData);
+
+console.log(
+  "Rooms inside allRacks:",
+  [...new Set(allRacks.map(r => r.room))]
+);
+
+console.log(
+  "Racks sent to advisor:",
+  allRacks.map(r => `${r.room}-${r.rackId}`)
+);
 
     const suggestions = suggestBestPlacement(
       profile,
