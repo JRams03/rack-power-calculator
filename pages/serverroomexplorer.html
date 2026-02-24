@@ -528,14 +528,19 @@ function formatRackDisplay(rackId) {
 
   if (!rackId) return "Unknown Rack";
 
-  const match = rackId.match(/(\w+)-?RK?(\d+)/i);
+  // 🔹 Zoek een server die bij dit rack hoort
+  const server = currentRackServers?.find(s => s.rack === rackId);
 
-  if (!match) return rackId;
+  if (!server) {
+    // fallback als geen context beschikbaar
+    const num = rackId.match(/\d+/)?.[0];
+    return num ? `Rack ${num}` : rackId;
+  }
 
-  const room = match[1];
-  const rack = match[2];
+  const roomNumber = server.room?.replace(/\D/g, "") || "";
+  const rackNumber = rackId.match(/\d+/)?.[0] || rackId;
 
-  return `Server Room ${room.replace(/\D/g, "")} - Rack ${rack}`;
+  return `Server Room ${roomNumber} - Rack ${rackNumber}`;
 }
 
 /* ========================= MAIN ========================= */
