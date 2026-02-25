@@ -553,6 +553,25 @@ function formatRackDisplay(rackId) {
   return `Server Room ${roomNumber} - Rack ${rackNumber}`;
 }
 
+/**********************************************************************************************/
+
+function smoothScrollToDetail() {
+
+  const detail = document.getElementById("rackDetail");
+  const content = document.getElementById("content");
+
+  if (!detail || !content) return;
+
+  requestAnimationFrame(() => {
+    content.scrollTo({
+      top: detail.offsetTop - 20,
+      behavior: "smooth"
+    });
+  });
+}
+
+/**********************************************************************************************/
+
 /* ========================= MAIN ========================= */
 
 function init() {
@@ -943,19 +962,10 @@ card.onclick = () => {
 
   renderRackDetail(rack, list);
   renderPowerSummary(rack, list);
-
   showPduButton();
 
-  const detail = document.getElementById("rackDetail");
+  smoothScrollToDetail();
 
-  if (detail) {
- const content = document.getElementById("content");
-
-content.scrollTo({
-  top: detail.offsetTop - 20,
-  behavior: "smooth"
-});
-  }
 };
 
   return card;
@@ -1071,17 +1081,9 @@ data
 
 card.onclick = () => {
   renderUnassignedDetail(unassigned);
-
-  const detail = document.getElementById("rackDetail");
-  if (detail) {
-const content = document.getElementById("content");
-
-content.scrollTo({
-  top: detail.offsetTop - 20,
-  behavior: "smooth"
-});
-  }
+  smoothScrollToDetail();
 };
+
 
   container.appendChild(card);
 }
