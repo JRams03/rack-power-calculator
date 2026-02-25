@@ -562,12 +562,14 @@ function smoothScrollToDetail() {
 
   if (!detail || !content) return;
 
+setTimeout(() => {
   requestAnimationFrame(() => {
     content.scrollTo({
       top: detail.offsetTop - 20,
       behavior: "smooth"
     });
   });
+}, 0);
 }
 
 /**********************************************************************************************/
