@@ -560,14 +560,41 @@ function smoothScrollToDetail() {
   const detail = document.getElementById("rackDetail");
   if (!detail) return;
 
-  const y =
-    detail.getBoundingClientRect().top +
-    window.scrollY - 20;
+  // vind echte scroll parent
+  let parent = detail.parentElement;
 
-  window.scrollTo({
-    top: y,
-    behavior: "smooth"
-  });
+  while (parent) {
+    const style = getComputedStyle(parent);
+
+    if (
+      style.overflowY === "auto" ||
+      style.overflowY === "scroll"
+    ) {
+      break;
+    }
+
+    parent = parent.parentElement;
+  }
+
+  const scrollContainer = parent || window;
+
+  const top =
+    detail.getBoundingClientRect().top +
+    (scrollContainer === window
+      ? window.scrollY
+      : scrollContainer.scrollTop) - 20;
+
+  if (scrollContainer === window) {
+    window.scrollTo({
+      top,
+      behavior: "smooth"
+    });
+  } else {
+    scrollContainer.scrollTo({
+      top,
+      behavior: "smooth"
+    });
+  }
 }
 
 /**********************************************************************************************/
