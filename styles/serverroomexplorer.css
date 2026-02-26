@@ -82,13 +82,17 @@ html {
 }
 
 .rack-card {
+  position: relative;               /* 🔥 nodig voor type pill */
+
   background: #ffffff;
   border: 1px solid var(--border-light);
   border-radius: 10px;
   padding: 14px 16px;
+
   display: flex;
   flex-direction: column;
   gap: 6px;
+
   cursor: pointer;
   transition: box-shadow 0.2s ease, transform 0.1s ease;
 }
@@ -98,6 +102,50 @@ html {
   transform: translateY(-2px);
 }
 
+/* ===== Rack Type Pill (Internal / Storage / No Prov) ===== */
+
+.rack-type-pill {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  pointer-events: none;             /* 🔥 blokkeert geen clicks */
+}
+
+/* Type kleuren */
+
+.type-INTERNAL {
+  background: #111827;
+  color: #ffffff;
+}
+
+.type-STORAGE {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.type-NO_PROV {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.type-G25 {
+  background: #7c3aed;   /* paars */
+}
+
+.type-COD {
+  background: #eddb3a;   /* paars */
+}
+   
+/* ===== Card Content ===== */
+
 .rack-title {
   font-weight: 600;
   font-size: 14px;
@@ -105,13 +153,14 @@ html {
 
 .rack-stats {
   display: flex;
-  flex-wrap: wrap;   /* rij mag wrappen */
+  flex-wrap: wrap;
   gap: 4px;
 }
 
 .rack-pill {
-  white-space: nowrap;  /* 🔥 pill zelf mag NIET breken */
+  white-space: nowrap;
 }
+
 
 /* =========================================================
    RACK CARD PILLS

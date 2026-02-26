@@ -24,6 +24,8 @@ import { DRIVE_CATALOG } from "/rack-power-calculator/data/drives.js";
 import { analyzeRack, calculateRackPenalty } from "/rack-power-calculator/core/rackAnalysis.js";
 import { suggestBestPlacement } from "/rack-power-calculator/core/placementAdvisor.js";
 import { suggestBestSlot } from "/rack-power-calculator/core/slotAdvisor.js";
+import { RACK_CLASSIFICATION } 
+from "/rack-power-calculator/data/rack_classification.js";
 
 let selectedRackId = null;
 let currentRackServers = [];
@@ -567,6 +569,23 @@ function smoothScrollToDetail() {
 }
 /**********************************************************************************************/
 
+function getRackClassification(room, rack) {
+
+  if (!room || !rack) return null;
+
+  const dcConfig = RACK_CLASSIFICATION[room.toUpperCase()];
+  if (!dcConfig) return null;
+
+  for (const [type, rackList] of Object.entries(dcConfig)) {
+    if (rackList.includes(rack)) {
+      return type;
+    }
+  }
+
+  return null;
+}
+
+
 /* ========================= MAIN ========================= */
 
 function init() {
@@ -924,12 +943,24 @@ function createRackCard({ title, rack, list }) {
     stats[status] = (stats[status] || 0) + 1;
   });
 
- const card = document.createElement("div");
- card.className = "rack-card";
- card.dataset.rack = rack;
- card.dataset.room = list[0]?.room || "";
+  const card = document.createElement("div");
+  card.className = "rack-card";
+  card.dataset.rack = rack;
+  card.dataset.room = list[0]?.room || "";
+
+  // 🔹 Nieuwe classificatie
+  const classification = getRackClassification(
+    list[0]?.room,
+    rack
+  );
 
   card.innerHTML = `
+    ${classification ? `
+      <div class="rack-type-pill type-${classification}">
+        ${classification.replace("_", " ")}
+      </div>
+    ` : ""}
+
     <div class="rack-title">${title}</div>
     <div>${list.length} / ${MAX_SLOTS} used</div>
 
@@ -950,18 +981,17 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-card.onclick = () => {
+  card.onclick = () => {
 
-  selectedRackId = rack;
-  currentRackServers = list;
+    selectedRackId = rack;
+    currentRackServers = list;
 
-  renderRackDetail(rack, list);
-  renderPowerSummary(rack, list);
-  showPduButton();
+    renderRackDetail(rack, list);
+    renderPowerSummary(rack, list);
+    showPduButton();
 
-  smoothScrollToDetail();
-
-};
+    smoothScrollToDetail();
+  };
 
   return card;
 }
