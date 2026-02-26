@@ -77,6 +77,8 @@ html {
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: 16px;
   margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
 }
 
 .rack-card {
@@ -173,6 +175,7 @@ html {
 .main-split {
   display: flex;
   gap: 28px;
+  align-items: flex-start;
 }
 
 .left-pane {
@@ -184,6 +187,9 @@ html {
   width: 380px;
   border-left: 1px solid var(--border-light);
   padding-left: 20px;
+
+  position: relative;
+  z-index: 1;
 }
 
 
