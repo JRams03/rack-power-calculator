@@ -740,6 +740,7 @@ reader.onload = evt => {
     location.reload();
 });
 
+renderPlacementAdvisor();
 
  /**********************************************************************************************/
 
@@ -1579,10 +1580,11 @@ function renderPlacementAdvisor(suggestions = []) {
         const rankNumber = index + 1;
 
         const medal =
-          index === 0 ? "🥇" :
-          index === 1 ? "🥈" :
-          index === 2 ? "🥉" :
-          `#${rankNumber}`;
+          index === 0 ? "#1" :
+          index === 1 ? "#2" :
+          index === 2 ? "#3" :
+          index === 3 ? "#4" :
+          "";
 
         // 🔹 Placeholder (geen resultaat)
         if (!s) {
