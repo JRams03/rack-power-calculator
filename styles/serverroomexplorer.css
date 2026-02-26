@@ -872,6 +872,8 @@ grid-template-columns:
   border: 1px solid var(--border-light);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+
+  align-items: start;   
 }
 
 /* ================= LEFT ================= */
