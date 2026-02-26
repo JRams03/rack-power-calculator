@@ -123,25 +123,27 @@ html {
 
 .type-INTERNAL {
   background: #111827;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .type-STORAGE {
   background: #2563eb;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .type-NO_PROV {
   background: #dc2626;
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .type-G25 {
-  background: #7c3aed;   /* paars */
+  background: #7c3aed; 
+  color: #ffffff !important;
 }
 
 .type-COD {
-  background: #eddb3a;   /* paars */
+  background: #eddb3a;  
+  color: #000000 !important;
 }
    
 /* ===== Card Content ===== */
