@@ -145,6 +145,13 @@ html {
   background: #eddb3a;  
   color: #000000 !important;
 }
+
+.rack-card.type-INTERNAL,
+.rack-card.type-STORAGE,
+.rack-card.type-NO_PROV,
+.rack-card.type-COD {
+  filter: brightness(0.97);
+}
    
 /* ===== Card Content ===== */
 
@@ -999,6 +1006,26 @@ grid-template-columns:
 .placement-fields select.field-error {
   border: 2px solid #e74c3c;
   box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.15);
+}
+
+.placement-exclude {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.exclude-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.placement-exclude label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 
 /* ================= RIGHT ================= */

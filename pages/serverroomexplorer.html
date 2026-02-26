@@ -115,6 +115,18 @@ window.addEventListener("DOMContentLoaded", async () => {
         <option value="">Select Room</option>
       </select>
 
+      <div class="placement-exclude">
+
+  <div class="exclude-title">Exclude Rack Types</div>
+
+  <label><input type="checkbox" value="NO_PROV" checked> No Provision</label>
+  <label><input type="checkbox" value="STORAGE" checked> Storage</label>
+  <label><input type="checkbox" value="COD" checked> COD</label>
+  <label><input type="checkbox" value="INTERNAL" checked> Internal</label>
+  <label><input type="checkbox" value="G25" checked> 25G</label>
+
+</div>
+
 <button id="placementSearchBtn">
   Search Best Location
 </button>
@@ -628,6 +640,7 @@ roomSelect.addEventListener("change", () => {
   updatePlacementButton();
 });
 
+
 searchBtn.addEventListener("click", () => {
 
   if (!serverSelect.value) {
@@ -654,9 +667,28 @@ searchBtn.addEventListener("click", () => {
 
   const allRacks = buildAllRacks(baseData);
 
+  const excludedTypes = Array.from(
+    document.querySelectorAll(".placement-exclude input[type='checkbox']")
+  )
+  .filter(cb => !cb.checked)
+  .map(cb => cb.value);
+
+  const filteredRacks = allRacks.filter(r => {
+
+    const rackType = getRackClassification(
+      r.dc,
+      r.room,
+      r.rackId
+    );
+
+    if (!rackType) return true;
+
+    return !excludedTypes.includes(rackType);
+  });
+
   const suggestions = suggestBestPlacement(
     profile,
-    allRacks,
+    filteredRacks,
     suggestBestSlot
   );
 
@@ -951,6 +983,10 @@ function createRackCard({ title, rack, list }) {
   card.dataset.rack = rack;
   card.dataset.room = list[0]?.room || "";
   card.dataset.dc   = list[0]?.dc   || "";
+
+  if (classification) {
+  card.classList.add(`type-${classification}`);
+}
 
   // 🔥 DC + Room correcte lookup
   const classification = getRackClassification(
