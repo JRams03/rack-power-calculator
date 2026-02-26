@@ -1584,6 +1584,7 @@ function renderPlacementAdvisor(suggestions = []) {
           index === 1 ? "#2" :
           index === 2 ? "#3" :
           index === 3 ? "#4" :
+          index === 4 ? "#5" :
           "";
 
         // 🔹 Placeholder (geen resultaat)
@@ -1617,8 +1618,8 @@ function renderPlacementAdvisor(suggestions = []) {
               <div class="advisor-rank">${medal}</div>
 
               <div class="advisor-info">
-                Server Room ${s.room.replace(/\D/g,"")} - Rack ${s.rackId.match(/\d+/)?.[0]}
-                <span>Slot ${s.slot}</span>
+                      Server Room ${s.room.replace(/\D/g,"")} ➠ 
+                      Rack ${s.rackId.match(/\d+/)?.[0]} ➠ Slot ${s.slot}
 
                 <div class="advisor-reason">
                   ${explanation}

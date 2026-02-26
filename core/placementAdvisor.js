@@ -85,5 +85,5 @@ export function suggestBestPlacement(
   // 5️⃣ Sort ascending (lower score = better)
   results.sort((a, b) => a.finalScore - b.finalScore);
 
-  return results.slice(0, 4);
+  return results.slice(0, 5);
 }
