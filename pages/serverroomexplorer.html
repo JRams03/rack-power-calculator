@@ -1566,7 +1566,7 @@ function renderPlacementAdvisor(suggestions = []) {
   const container = document.getElementById("placementAdvisor");
   if (!container) return;
 
-  const MAX_RESULTS = 4;
+  const MAX_RESULTS = 5;
 
   // Maak altijd 4 slots
   const padded = Array.from({ length: MAX_RESULTS }, (_, i) => {
@@ -1618,8 +1618,8 @@ function renderPlacementAdvisor(suggestions = []) {
               <div class="advisor-rank">${medal}</div>
 
               <div class="advisor-info">
-                      Server Room ${s.room.replace(/\D/g,"")} ➠ 
-                      Rack ${s.rackId.match(/\d+/)?.[0]} ➠ Slot ${s.slot}
+                      Server Room ${s.room.replace(/\D/g,"")}   ➠   
+                      Rack ${s.rackId.match(/\d+/)?.[0]}   ➠   Slot ${s.slot}
 
                 <div class="advisor-reason">
                   ${explanation}
