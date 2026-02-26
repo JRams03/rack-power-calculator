@@ -984,16 +984,17 @@ function createRackCard({ title, rack, list }) {
   card.dataset.room = list[0]?.room || "";
   card.dataset.dc   = list[0]?.dc   || "";
 
-  if (classification) {
-  card.classList.add(`type-${classification}`);
-}
-
-  // 🔥 DC + Room correcte lookup
+  // 🔥 EERST declareren
   const classification = getRackClassification(
     list[0]?.dc,
     list[0]?.room,
     rack
   );
+
+  // 🔥 DAN pas gebruiken
+  if (classification) {
+    card.classList.add(`type-${classification}`);
+  }
 
   card.innerHTML = `
     ${classification ? `
@@ -1023,14 +1024,12 @@ function createRackCard({ title, rack, list }) {
   `;
 
   card.onclick = () => {
-
     selectedRackId = rack;
     currentRackServers = list;
 
     renderRackDetail(rack, list);
     renderPowerSummary(rack, list);
     showPduButton();
-
     smoothScrollToDetail();
   };
 
