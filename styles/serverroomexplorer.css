@@ -1106,5 +1106,14 @@ grid-template-columns:
   line-height: 1.4;
 }
 
+.advisor-placeholder {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.advisor-placeholder .advisor-score {
+  color: #9ca3af;
+}
+
 
 

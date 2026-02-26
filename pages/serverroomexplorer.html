@@ -670,7 +670,7 @@ searchBtn.addEventListener("click", () => {
   const excludedTypes = Array.from(
     document.querySelectorAll(".placement-exclude input[type='checkbox']")
   )
-  .filter(cb => !cb.checked)
+  .filter(cb => cb.checked)   
   .map(cb => cb.value);
 
   const filteredRacks = allRacks.filter(r => {
@@ -1560,28 +1560,42 @@ function populatePlacementRooms(filteredServers) {
 }
  /**********************************************************************************************/
 
-function renderPlacementAdvisor(suggestions) {
+function renderPlacementAdvisor(suggestions = []) {
 
   const container = document.getElementById("placementAdvisor");
   if (!container) return;
 
-  if (!suggestions || suggestions.length === 0) {
-    container.innerHTML = `
-      <div class="advisor-empty">
-        No safe placement found within policy.
-      </div>
-    `;
-    return;
-  }
+  const MAX_RESULTS = 4;
+
+  // Maak altijd 4 slots
+  const padded = Array.from({ length: MAX_RESULTS }, (_, i) => {
+    return suggestions[i] || null;
+  });
 
   container.innerHTML = `
     <div class="advisor-list">
-      ${suggestions.map((s, index) => {
+      ${padded.map((s, index) => {
+
+        const rankNumber = index + 1;
 
         const medal =
           index === 0 ? "🥇" :
           index === 1 ? "🥈" :
-          "🥉";
+          index === 2 ? "🥉" :
+          `#${rankNumber}`;
+
+        // 🔹 Placeholder (geen resultaat)
+        if (!s) {
+          return `
+            <div class="advisor-item advisor-placeholder">
+              <div class="advisor-left">
+                <div class="advisor-rank">${medal}</div>
+                <div class="advisor-info"></div>
+              </div>
+              <div class="advisor-score">--</div>
+            </div>
+          `;
+        }
 
         const scorePercent = Math.round(s.slotScore * 100);
 
@@ -1593,16 +1607,16 @@ function renderPlacementAdvisor(suggestions) {
         const explanation = buildPlacementExplanation(s);
 
         return `
-          <div class="advisor-item ${safetyClass}" 
-               data-rack="${s.rackId}" 
+          <div class="advisor-item ${safetyClass}"
+               data-rack="${s.rackId}"
                data-room="${s.room}">
-            
+
             <div class="advisor-left">
               <div class="advisor-rank">${medal}</div>
 
               <div class="advisor-info">
-              Server Room ${s.room.replace(/\D/g,"")} - Rack ${s.rackId.match(/\d+/)?.[0]}
-              <span>Slot ${s.slot}</span>
+                Server Room ${s.room.replace(/\D/g,"")} - Rack ${s.rackId.match(/\d+/)?.[0]}
+                <span>Slot ${s.slot}</span>
 
                 <div class="advisor-reason">
                   ${explanation}
@@ -1616,35 +1630,33 @@ function renderPlacementAdvisor(suggestions) {
 
           </div>
         `;
-
       }).join("")}
     </div>
   `;
 
-document.querySelectorAll(".advisor-item").forEach(el => {
+  // Alleen click handlers voor echte resultaten
+  document.querySelectorAll(".advisor-item:not(.advisor-placeholder)")
+    .forEach(el => {
 
-  el.onclick = () => {
+      el.onclick = () => {
 
-    document.querySelectorAll(".advisor-item")
-      .forEach(x => x.classList.remove("active-result"));
+        document.querySelectorAll(".advisor-item")
+          .forEach(x => x.classList.remove("active-result"));
 
-    el.classList.add("active-result");
+        el.classList.add("active-result");
 
-const rackId = el.dataset.rack;
-const room   = el.dataset.room;
+        const rackId = el.dataset.rack;
+        const room   = el.dataset.room;
 
-const rackCard = document.querySelector(
-  `.rack-card[data-rack="${rackId}"][data-room="${room}"]`
-);
+        const rackCard = document.querySelector(
+          `.rack-card[data-rack="${rackId}"][data-room="${room}"]`
+        );
 
+        if (!rackCard) return;
 
-    if (!rackCard) return;
-
-    rackCard.click();
-
-
-  }
-});
+        rackCard.click();
+      };
+    });
 }
 
 // ================= BACK TO TOP =================
