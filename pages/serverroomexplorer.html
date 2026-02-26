@@ -491,13 +491,14 @@ function buildAllRacks(filteredServers) {
       };
     });
 
-    result.push({
-      rackId,
-      room: servers[0].room,
-      servers: structuredServers,
-      banks: powerResult.banks,
-      phases: powerResult.phases
-    });
+result.push({
+  rackId,
+  dc: servers[0].dc,          // 🔥 toevoegen
+  room: servers[0].room,
+  servers: structuredServers,
+  banks: powerResult.banks,
+  phases: powerResult.phases
+});
   });
 
   return result;
@@ -569,11 +570,13 @@ function smoothScrollToDetail() {
 }
 /**********************************************************************************************/
 
-function getRackClassification(room, rack) {
+function getRackClassification(dc, room, rack) {
 
-  if (!room || !rack) return null;
+  if (!dc || !room || !rack) return null;
 
-  const dcConfig = RACK_CLASSIFICATION[room.toUpperCase()];
+  const key = `${dc}.${room}`;   // DC03.SR01
+
+  const dcConfig = RACK_CLASSIFICATION[key];
   if (!dcConfig) return null;
 
   for (const [type, rackList] of Object.entries(dcConfig)) {
@@ -584,7 +587,6 @@ function getRackClassification(room, rack) {
 
   return null;
 }
-
 
 /* ========================= MAIN ========================= */
 
@@ -828,6 +830,7 @@ return {
   psu: row["Power Capacity"] || "",
   unitSizeCsv: row["Unit Size"] || "",
 
+  dc: (loc[0] || "").toUpperCase(),
   room: (loc[1] || "").toUpperCase(),
   rack: (loc[2] || "").toUpperCase(),
   slot: extractSlotNumber(loc[3])
@@ -947,9 +950,11 @@ function createRackCard({ title, rack, list }) {
   card.className = "rack-card";
   card.dataset.rack = rack;
   card.dataset.room = list[0]?.room || "";
+  card.dataset.dc   = list[0]?.dc   || "";
 
-  // 🔹 Nieuwe classificatie
+  // 🔥 DC + Room correcte lookup
   const classification = getRackClassification(
+    list[0]?.dc,
     list[0]?.room,
     rack
   );
@@ -957,7 +962,7 @@ function createRackCard({ title, rack, list }) {
   card.innerHTML = `
     ${classification ? `
       <div class="rack-type-pill type-${classification}">
-        ${classification.replace("_", " ")}
+        ${classification.replace(/_/g, " ")}
       </div>
     ` : ""}
 
