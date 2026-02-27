@@ -1034,7 +1034,9 @@ function parseCSV(text) {
         rack: (loc[2] || "").toUpperCase(),
 
        
-        slot: slotFromLocation.toUpperCase()
+        slot: slotFromLocation
+          ? String(parseInt(slotFromLocation, 10))
+          : ""
       };
     });
 }
