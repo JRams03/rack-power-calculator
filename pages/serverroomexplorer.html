@@ -1312,7 +1312,9 @@ console.log(
   const occupied = new Set();
 
  allSlots.forEach((slotKey, index) => {
-
+if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
+  console.log("Skipping slot due to occupied:", slotKey);
+}
   
   if (slotKey === "A") {
 
