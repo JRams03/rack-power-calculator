@@ -1450,32 +1450,49 @@ function renderPowerSummary(rack, list) {
     const container = document.getElementById("powerSummary");
 
 container.innerHTML = `
-  <div class="rack-detail-header">${formatRackDisplay(rack)}</div>
+  <div class="power-panel">
 
-  <div class="power-card ${usageClass(totalAmp, PHASE_LIMIT * 3)}">
-    <div class="power-title">Total Design Load</div>
-    <div class="power-value">${totalAmp.toFixed(2)} A</div>
+    <div class="power-header">
+      ${formatRackDisplay(rack)}
+    </div>
+
+    <div class="power-total">
+      <div class="power-total-label">Total Design Load</div>
+      <div class="power-total-value">${totalAmp.toFixed(2)} A</div>
+    </div>
+
+    <div class="power-section">
+      <div class="power-section-title">Phase Usage</div>
+      ${phases.map((p,i)=> renderUsageBar(`L${i+1}`, p, PHASE_LIMIT)).join("")}
+    </div>
+
+    <div class="power-section">
+      <div class="power-section-title">Bank Usage</div>
+      ${banks.map((b,i)=> renderUsageBar(`Bank ${String.fromCharCode(65+i)}`, b, BANK_LIMIT)).join("")}
+    </div>
+
   </div>
-
-      <div class="power-card">
-        <div class="power-title">Phase Usage</div>
-        ${phases.map((p,i)=>`
-          <div class="${usageClass(p, PHASE_LIMIT)}">
-            L${i+1}: ${p.toFixed(2)}A / ${PHASE_LIMIT}A
-          </div>
-        `).join("")}
-      </div>
-
-      <div class="power-card">
-        <div class="power-title">Bank Usage</div>
-        ${banks.map((b,i)=>`
-          <div class="${usageClass(b, BANK_LIMIT)}">
-            Bank ${String.fromCharCode(65+i)}: ${b.toFixed(2)}A / ${BANK_LIMIT}A
-          </div>
-        `).join("")}
-      </div>
-    `;
+`;
   }
+
+  function renderUsageBar(label, value, limit) {
+
+  const percent = Math.min((value / limit) * 100, 100);
+
+  let level = "ok";
+  if (value > limit) level = "bad";
+  else if (value > limit * 0.8) level = "warn";
+
+  return `
+    <div class="usage-row">
+      <div class="usage-label">${label}</div>
+      <div class="usage-bar">
+        <div class="usage-fill ${level}" style="width:${percent}%"></div>
+      </div>
+      <div class="usage-value">${value.toFixed(2)}A / ${limit}A</div>
+    </div>
+  `;
+}
 
  /**********************************************************************************************/
 
