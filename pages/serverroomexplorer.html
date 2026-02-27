@@ -667,7 +667,7 @@ function renderRoomUnassigned(list) {
       Room Unassigned Devices
     </div>
 
-    <div class="slot-row header">
+    <div class="unassigned-row header">
      <div>Status</div>
      <div>Hardware</div>
      <div>Hostname</div>
@@ -680,7 +680,7 @@ function renderRoomUnassigned(list) {
   list.forEach(device => {
 
     const row = document.createElement("div");
-    row.className = "slot-row";
+    row.className = "unassigned-row";
 
     row.innerHTML = `
       <div>
