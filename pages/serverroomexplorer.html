@@ -40,15 +40,18 @@ window.addEventListener("DOMContentLoaded", async () => {
      DATA & SEARCH
 ========================= -->
 
-<div id="welcomeNote" class="welcome-note hidden">
-  <div class="welcome-note-card">
-    <div class="welcome-note-title">Notice</div>
-    <div class="welcome-note-text">
-      This tool calculates rack power based on design load.  
-      Always validate final placement with engineering before deployment.
-    </div>
-    <button id="closeWelcomeNote">Understood</button>
-  </div>
+<div class="welcome-note-text">
+  How to use this tool correctly:
+  <br><br>
+  Go to <strong>IMS → Hardware Search</strong>,  
+  select your <strong>DC</strong>,  
+  click <strong>Display</strong>,  
+  then export the full result as <strong>CSV</strong>.
+  <br><br>
+  Import the file here <strong>unchanged</strong>.  
+  Do not edit, filter or clean the data — this tool depends on the original structure.
+  <br><br>
+  Clean input = reliable rack analysis.
 </div>
 
 <div class="control-group">
@@ -1943,13 +1946,13 @@ const noteEl = document.getElementById("welcomeNote");
 const closeBtn = document.getElementById("closeWelcomeNote");
 
 // Toon alleen als nog niet gezien
-if (!localStorage.getItem(noteKey)) {
+if (!sessionStorage.getItem(noteKey)) {
   noteEl.classList.remove("hidden");
 }
 
 // Wegklikken
 closeBtn?.addEventListener("click", () => {
-  localStorage.setItem(noteKey, "true");
+  sessionStorage.setItem(noteKey, "true");
   noteEl.classList.add("hidden");
 });
 
