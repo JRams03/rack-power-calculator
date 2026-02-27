@@ -39,6 +39,18 @@ window.addEventListener("DOMContentLoaded", async () => {
 <!-- =========================
      DATA & SEARCH
 ========================= -->
+
+<div id="welcomeNote" class="welcome-note hidden">
+  <div class="welcome-note-card">
+    <div class="welcome-note-title">Notice</div>
+    <div class="welcome-note-text">
+      This tool calculates rack power based on design load.  
+      Always validate final placement with engineering before deployment.
+    </div>
+    <button id="closeWelcomeNote">Understood</button>
+  </div>
+</div>
+
 <div class="control-group">
   <div class="control-title">Data & Search</div>
   <div class="control-row">
@@ -1505,7 +1517,7 @@ container.innerHTML = `
 
     <div class="power-total">
       <div class="power-total-label">Total Design Load</div>
-      <div class="power-total-value">${totalAmp.toFixed(2)} A</div>
+      <div class="power-total-value">${totalAmp.toFixed(2)} A / 48A</div>
     </div>
 
     <div class="power-section">
@@ -1926,6 +1938,20 @@ if (!confirm("Clear stored rack data?")) return;
     location.reload(); // simpel en schoon
 });
 
+const noteKey = "serverroom_notice_seen";
+const noteEl = document.getElementById("welcomeNote");
+const closeBtn = document.getElementById("closeWelcomeNote");
+
+// Toon alleen als nog niet gezien
+if (!localStorage.getItem(noteKey)) {
+  noteEl.classList.remove("hidden");
+}
+
+// Wegklikken
+closeBtn?.addEventListener("click", () => {
+  localStorage.setItem(noteKey, "true");
+  noteEl.classList.add("hidden");
+});
 
 renderPlacementAdvisor();
 
