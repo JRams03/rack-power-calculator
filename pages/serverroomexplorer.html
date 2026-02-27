@@ -776,6 +776,79 @@ function renderAllRooms(data) {
     });
 }
 
+function createRackCard({ title, rack, list }) {
+
+  const stats = {};
+
+  list.forEach(s => {
+    const status = (s.status || "")
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, "_");
+
+    if (!status) return;
+
+    stats[status] = (stats[status] || 0) + 1;
+  });
+
+  const card = document.createElement("div");
+  card.className = "rack-card";
+  card.dataset.rack = rack;
+  card.dataset.room = list[0]?.room || "";
+  card.dataset.dc   = list[0]?.dc   || "";
+
+  // 🔥 EERST declareren
+  const classification = getRackClassification(
+    list[0]?.dc,
+    list[0]?.room,
+    rack
+  );
+
+  // 🔥 DAN pas gebruiken
+  if (classification) {
+    card.classList.add(`type-${classification}`);
+  }
+
+  card.innerHTML = `
+    ${classification ? `
+      <div class="rack-type-pill type-${classification}">
+        ${classification.replace(/_/g, " ")}
+      </div>
+    ` : ""}
+
+    <div class="rack-title">${title}</div>
+    <div>${list.length} / ${MAX_SLOTS} used</div>
+
+    <div class="rack-stats">
+      ${
+        Object.entries(stats)
+          .filter(([_, count]) => count > 0)
+          .map(([status, count]) => `
+            <div class="rack-pill status-${status}">
+              ${STATUS_SHORT[status] || status}-${count}
+              <span class="pill-tooltip">
+                ${status.replace(/_/g, " ")}: ${count}
+              </span>
+            </div>
+          `)
+          .join("")
+      }
+    </div>
+  `;
+
+  card.onclick = () => {
+    selectedRackId = rack;
+    currentRackServers = list;
+
+    renderRackDetail(rack, list);
+    renderPowerSummary(rack, list);
+    showPduButton();
+    smoothScrollToDetail();
+  };
+
+  return card;
+}
+
 
  /**********************************************************************************************/
 
@@ -1149,7 +1222,9 @@ function renderRooms() {
     container.appendChild(btn);
   });
 
+ if (!selectedRackId) {
   allBtn.click();
+}
 }
 
  /**********************************************************************************************/
