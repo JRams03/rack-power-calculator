@@ -109,6 +109,12 @@
   transform: translateY(-2px);
 }
 
+.rack-card.active-rack {
+  border: 2px solid var(--active);
+  box-shadow: 0 0 0 3px rgba(204, 56, 46, 0.15);
+  transform: translateY(-2px);
+}
+
 /* ===== Rack Type Pill (Internal / Storage / No Prov) ===== */
 
 .rack-type-pill {

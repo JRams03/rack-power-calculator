@@ -569,6 +569,31 @@ function formatRackDisplay(rackId) {
 }
 
 /**********************************************************************************************/
+function animateScroll(container, target, duration = 400) {
+
+  const start = container.scrollTop;
+  const change = target - start;
+  let startTime = null;
+
+  function animation(currentTime) {
+
+    if (!startTime) startTime = currentTime;
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    const ease = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    container.scrollTop = start + change * ease;
+
+    if (progress < 1) {
+      requestAnimationFrame(animation);
+    }
+  }
+
+  requestAnimationFrame(animation);
+}
 
 function smoothScrollToDetail() {
 
@@ -577,11 +602,13 @@ function smoothScrollToDetail() {
 
   if (!content || !detail) return;
 
-  const start = content.scrollTop;
-  const end = detail.offsetTop - 20;
-  const duration = 400; // ms
+  const header = detail.querySelector(".rack-detail-header");
+  const headerHeight = header ? header.offsetHeight : 0;
 
-  let startTime = null;
+  const target = detail.offsetTop + headerHeight - 10;
+
+  animateScroll(content, target, 400);
+
 
   function animateScroll(timestamp) {
 
@@ -853,24 +880,30 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-  card.onclick = () => {
-    selectedRackId = rack;
-    currentRackServers = list;
+card.onclick = () => {
 
-    const detail = document.getElementById("rackDetail");
+  selectedRackId = rack;
+  currentRackServers = list;
 
-    // 🔥 Reset fade eerst
-    detail.classList.remove("visible");
+  // 🔥 Remove previous highlight
+  document.querySelectorAll(".rack-card")
+    .forEach(c => c.classList.remove("active-rack"));
 
-    renderRackDetail(rack, list);
-    renderPowerSummary(rack, list);
-    showPduButton();
+  // 🔥 Highlight current
+  card.classList.add("active-rack");
 
-    requestAnimationFrame(() => {
-      detail.classList.add("visible");
-      smoothScrollToDetail();
-    });
-  };
+  const detail = document.getElementById("rackDetail");
+  detail.classList.remove("visible");
+
+  renderRackDetail(rack, list);
+  renderPowerSummary(rack, list);
+  showPduButton();
+
+  requestAnimationFrame(() => {
+    detail.classList.add("visible");
+    smoothScrollToDetail();
+  });
+};
 
   return card;
 }
@@ -1865,7 +1898,7 @@ if (backToTop && content) {
   });
 
   backToTop.addEventListener("click", () => {
-    content.scrollTo({
+    animateScroll(content, 0, 400)({
       top: 0,
       behavior: "smooth"
     });
