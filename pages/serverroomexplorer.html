@@ -1074,16 +1074,63 @@ function renderAllRooms(data) {
     data
       .filter(s => s.room === room)
       .forEach(s => {
-        if (!racks[s.rack]) racks[s.rack] = [];
+
+        // 🔴 Geen rack → room unassigned bucket
+        if (!s.rack || String(s.rack).trim() === "") {
+
+          if (!racks["__ROOM_UNASSIGNED__"]) {
+            racks["__ROOM_UNASSIGNED__"] = [];
+          }
+
+          racks["__ROOM_UNASSIGNED__"].push(s);
+          return;
+        }
+
+        // 🟢 Normale rack
+        if (!racks[s.rack]) {
+          racks[s.rack] = [];
+        }
+
         racks[s.rack].push(s);
       });
 
     Object.keys(racks)
-      .sort((a, b) => parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", "")))
+      .sort((a, b) => {
+
+        if (a === "__ROOM_UNASSIGNED__") return -1;
+        if (b === "__ROOM_UNASSIGNED__") return 1;
+
+        return parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", ""));
+      })
       .forEach(rack => {
 
         const list = racks[rack];
 
+        // 🔴 Speciale kaart
+        if (rack === "__ROOM_UNASSIGNED__") {
+
+          const roomNumber = room.replace(/\D/g,"");
+
+          const card = document.createElement("div");
+          card.className = "rack-card special-room-card";
+
+          card.innerHTML = `
+            <div class="rack-title">
+              Server Room ${roomNumber} - Unassigned
+            </div>
+            <div>${list.length} devices</div>
+          `;
+
+          card.onclick = () => {
+            renderRoomUnassigned(list);
+            smoothScrollToDetail();
+          };
+
+          grid.appendChild(card);
+          return;
+        }
+
+        // 🟢 Normale rack
         const card = createRackCard({
           title: `${room} - ${formatRackName(rack)}`,
           rack,
