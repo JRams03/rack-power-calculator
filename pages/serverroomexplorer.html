@@ -1098,23 +1098,85 @@ function renderAllRooms(data) {
 
  /**********************************************************************************************/
 
+ function renderRoomUnassigned(list) {
+
+  const container = document.getElementById("rackDetail");
+
+  container.innerHTML = `
+    <div class="rack-detail-header">
+      Room Devices Without Rack
+    </div>
+
+    <div class="slot-row header">
+      <div>Status</div>
+      <div>Function</div>
+      <div>Hostname</div>
+      <div>Serial</div>
+      <div>Account</div>
+    </div>
+  `;
+
+  list.forEach(device => {
+
+    const row = document.createElement("div");
+    row.className = "slot-row";
+
+    row.innerHTML = `
+      <div>
+        <span class="status-badge ${statusClass(device.status)}">
+          ${device.status || "-"}
+        </span>
+      </div>
+
+      <div>${device.hardwareFunction || "-"}</div>
+      <div>${device.hostname || "-"}</div>
+      <div>${device.sltag || "-"}</div>
+      <div>${device.accountId || "-"}</div>
+    `;
+
+    container.appendChild(row);
+  });
+
+  document.getElementById("powerSummary").innerHTML = "";
+}
+
+
+ /**********************************************************************************************/
+
 
 function renderRacks(data, room) {
 
 const racks = {};
 const unassigned = [];
 
-// Groeperen
 data
   .filter(s => s.room === room)
   .forEach(s => {
 
-    // Geen rack of geen slot → unassigned
-     if (!s.rack || String(s.slot).trim() === "")
+    // 🔴 Geen rack → room unassigned
+    if (!s.rack) {
 
-    if (!racks[s.rack]) racks[s.rack] = [];
+      if (!racks["__ROOM_UNASSIGNED__"]) {
+        racks["__ROOM_UNASSIGNED__"] = [];
+      }
+
+      racks["__ROOM_UNASSIGNED__"].push(s);
+      return;
+    }
+
+    // 🟡 Wel rack maar geen slot → rack-level unassigned
+    if (String(s.slot).trim() === "") {
+      unassigned.push(s);
+      return;
+    }
+
+    // 🟢 Normaal rack + slot
+    if (!racks[s.rack]) {
+      racks[s.rack] = [];
+    }
+
     racks[s.rack].push(s);
-  });
+});
 
   const grid = document.getElementById("rackContainer");
   grid.innerHTML = `<div class="rack-grid"></div>`;
