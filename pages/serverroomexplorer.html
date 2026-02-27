@@ -854,156 +854,7 @@ function createRackCard({ title, rack, list }) {
 
 /* ========================= MAIN ========================= */
 
-function init() {
 
-const savedData = localStorage.getItem("serverroom_data");
-
-if (savedData) {
-  rackServers = JSON.parse(savedData);
-  populateFilters(rackServers);
-  renderRooms();
-  populatePlacementRooms(rackServers);
-}
-  
-  populatePlacementServers();
-
-  /* ================= FILTER LISTENERS ================= */
-
-const serverSelect = document.getElementById("placementServerSelect");
-const roomSelect   = document.getElementById("placementRoomSelect");
-const searchBtn    = document.getElementById("placementSearchBtn");
-const resetBtn     = document.getElementById("placementResetBtn");
-
-function updatePlacementButton() {
-  searchBtn.disabled = !serverSelect.value || !roomSelect.value;
-}
-
-serverSelect.addEventListener("change", () => {
-  serverSelect.classList.remove("field-error");
-  updatePlacementButton();
-});
-
-roomSelect.addEventListener("change", () => {
-  roomSelect.classList.remove("field-error");
-  updatePlacementButton();
-});
-
-
-searchBtn.addEventListener("click", () => {
-
-  if (!serverSelect.value) {
-    serverSelect.classList.add("field-error");
-    return;
-  }
-
-  if (!roomSelect.value) {
-    roomSelect.classList.add("field-error");
-    return;
-  }
-
-  const profile = SERVER_PROFILES.find(
-    s => s.id === serverSelect.value
-  );
-
-  if (!profile) return;
-
-  const normalizedRoom = roomSelect.value.trim().toUpperCase();
-
-  const baseData = rackServers.filter(s =>
-    s.room?.trim().toUpperCase() === normalizedRoom
-  );
-
-  const allRacks = buildAllRacks(baseData);
-
-  const excludedTypes = Array.from(
-    document.querySelectorAll(".placement-exclude input[type='checkbox']")
-  )
-  .filter(cb => cb.checked)   
-  .map(cb => cb.value);
-
-  const filteredRacks = allRacks.filter(r => {
-
-    const rackType = getRackClassification(
-      r.dc,
-      r.room,
-      r.rackId
-    );
-
-    if (!rackType) return true;
-
-    return !excludedTypes.includes(rackType);
-  });
-
-  const suggestions = suggestBestPlacement(
-    profile,
-    filteredRacks,
-    suggestBestSlot
-  );
-
-  renderPlacementAdvisor(suggestions);
-});
-
-resetBtn.addEventListener("click", () => {
-  serverSelect.value = "";
-  roomSelect.value = "";
-  document.getElementById("placementAdvisor").innerHTML = "";
-  updatePlacementButton();
-});
-
-updatePlacementButton();
-
-  document.querySelectorAll("#content select")
-    .forEach(select => select.addEventListener("change", renderRooms));
-
-document.getElementById("clearFilters")
-  .addEventListener("click", () => {
-    document.querySelectorAll("#content select")
-      .forEach(s => s.value = "");
-    renderRooms();
-  });
-
-document.getElementById("csvInput").addEventListener("change", e => {
-  const reader = new FileReader();
-
-  reader.onload = evt => {
-
-    const rawCsv = evt.target.result;
-
-    rackServers = parseCSV(rawCsv);
-
-    localStorage.setItem(
-      "serverroom_data",
-      JSON.stringify(rackServers)
-    );
-
-    populateFilters(rackServers);
-    renderRooms();
-    populatePlacementRooms(rackServers);
-  };
-
-  reader.readAsText(e.target.files[0]);
-});
-  document.getElementById("searchInput")
-    .addEventListener("input", renderRooms);
-
-    document.getElementById("clearMemory")
-  ?.addEventListener("click", () => {
-if (!confirm("Clear stored rack data?")) return;
-
-    localStorage.removeItem("serverroom_data");
-
-    rackServers = [];
-
-    document.getElementById("rackContainer").innerHTML = "";
-    document.getElementById("rackDetail").innerHTML = "";
-    document.getElementById("powerSummary").innerHTML = "";
-    document.getElementById("placementAdvisor").innerHTML = "";
-
-    location.reload(); // simpel en schoon
-});
-
-
-renderPlacementAdvisor();
 
  /**********************************************************************************************/
 
@@ -1862,7 +1713,158 @@ function renderPlacementAdvisor(suggestions = []) {
     });
 }
 
-// ================= BACK TO TOP =================
+
+
+function init() {
+
+const savedData = localStorage.getItem("serverroom_data");
+
+if (savedData) {
+  rackServers = JSON.parse(savedData);
+  populateFilters(rackServers);
+  renderRooms();
+  populatePlacementRooms(rackServers);
+}
+  
+  populatePlacementServers();
+
+  /* ================= FILTER LISTENERS ================= */
+
+const serverSelect = document.getElementById("placementServerSelect");
+const roomSelect   = document.getElementById("placementRoomSelect");
+const searchBtn    = document.getElementById("placementSearchBtn");
+const resetBtn     = document.getElementById("placementResetBtn");
+
+function updatePlacementButton() {
+  searchBtn.disabled = !serverSelect.value || !roomSelect.value;
+}
+
+serverSelect.addEventListener("change", () => {
+  serverSelect.classList.remove("field-error");
+  updatePlacementButton();
+});
+
+roomSelect.addEventListener("change", () => {
+  roomSelect.classList.remove("field-error");
+  updatePlacementButton();
+});
+
+
+searchBtn.addEventListener("click", () => {
+
+  if (!serverSelect.value) {
+    serverSelect.classList.add("field-error");
+    return;
+  }
+
+  if (!roomSelect.value) {
+    roomSelect.classList.add("field-error");
+    return;
+  }
+
+  const profile = SERVER_PROFILES.find(
+    s => s.id === serverSelect.value
+  );
+
+  if (!profile) return;
+
+  const normalizedRoom = roomSelect.value.trim().toUpperCase();
+
+  const baseData = rackServers.filter(s =>
+    s.room?.trim().toUpperCase() === normalizedRoom
+  );
+
+  const allRacks = buildAllRacks(baseData);
+
+  const excludedTypes = Array.from(
+    document.querySelectorAll(".placement-exclude input[type='checkbox']")
+  )
+  .filter(cb => cb.checked)   
+  .map(cb => cb.value);
+
+  const filteredRacks = allRacks.filter(r => {
+
+    const rackType = getRackClassification(
+      r.dc,
+      r.room,
+      r.rackId
+    );
+
+    if (!rackType) return true;
+
+    return !excludedTypes.includes(rackType);
+  });
+
+  const suggestions = suggestBestPlacement(
+    profile,
+    filteredRacks,
+    suggestBestSlot
+  );
+
+  renderPlacementAdvisor(suggestions);
+});
+
+resetBtn.addEventListener("click", () => {
+  serverSelect.value = "";
+  roomSelect.value = "";
+  document.getElementById("placementAdvisor").innerHTML = "";
+  updatePlacementButton();
+});
+
+updatePlacementButton();
+
+  document.querySelectorAll("#content select")
+    .forEach(select => select.addEventListener("change", renderRooms));
+
+document.getElementById("clearFilters")
+  .addEventListener("click", () => {
+    document.querySelectorAll("#content select")
+      .forEach(s => s.value = "");
+    renderRooms();
+  });
+
+document.getElementById("csvInput").addEventListener("change", e => {
+  const reader = new FileReader();
+
+  reader.onload = evt => {
+
+    const rawCsv = evt.target.result;
+
+    rackServers = parseCSV(rawCsv);
+
+    localStorage.setItem(
+      "serverroom_data",
+      JSON.stringify(rackServers)
+    );
+
+    populateFilters(rackServers);
+    renderRooms();
+    populatePlacementRooms(rackServers);
+  };
+
+  reader.readAsText(e.target.files[0]);
+});
+  document.getElementById("searchInput")
+    .addEventListener("input", renderRooms);
+
+    document.getElementById("clearMemory")
+  ?.addEventListener("click", () => {
+if (!confirm("Clear stored rack data?")) return;
+
+    localStorage.removeItem("serverroom_data");
+
+    rackServers = [];
+
+    document.getElementById("rackContainer").innerHTML = "";
+    document.getElementById("rackDetail").innerHTML = "";
+    document.getElementById("powerSummary").innerHTML = "";
+    document.getElementById("placementAdvisor").innerHTML = "";
+
+    location.reload(); // simpel en schoon
+});
+
+
+renderPlacementAdvisor();
 
 const backToTop = document.getElementById("backToTop");
 const content = document.getElementById("content");
