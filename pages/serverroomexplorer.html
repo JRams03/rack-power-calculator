@@ -664,6 +664,9 @@ function createRoomUnassignedCard(room, list) {
   const card = document.createElement("div");
   card.className = "rack-card special-room-card";
 
+  card.dataset.room = room;
+  card.dataset.rack = "UNASSIGNED";
+
   card.innerHTML = `
     <div class="rack-title">
       Server Room ${roomNumber} - Unassigned
@@ -672,7 +675,17 @@ function createRoomUnassignedCard(room, list) {
   `;
 
   card.onclick = () => {
+
+    // 🔥 Zorg dat state consistent is
+    selectedRackId = `UNASSIGNED-${room}`;
+    currentRackServers = list;
+
     renderRoomUnassigned(list);
+
+    // leeg power summary en pdu
+    document.getElementById("powerSummary").innerHTML = "";
+    document.getElementById("pduLaunchContainer").innerHTML = "";
+
     smoothScrollToDetail();
   };
 
