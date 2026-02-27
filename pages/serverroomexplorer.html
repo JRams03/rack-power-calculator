@@ -613,12 +613,7 @@ if (savedData) {
   populatePlacementRooms(rackServers);
 }
 
-if (savedCsv) {
-  rackServers = parseCSV(savedCsv);
-  populateFilters(rackServers);
-  renderRooms();
-  populatePlacementRooms(rackServers);
-}
+
 
   
 
@@ -720,35 +715,30 @@ document.getElementById("clearFilters")
     renderRooms();
   });
 
-  document.getElementById("csvInput").addEventListener("change", e => {
-    const reader = new FileReader();
-reader.onload = evt => {
+document.getElementById("csvInput").addEventListener("change", e => {
+  const reader = new FileReader();
 
-  const rawCsv = evt.target.result;
+  reader.onload = evt => {
 
+    const rawCsv = evt.target.result;
 
+    rackServers = parseCSV(rawCsv);
 
-  rackServers = parseCSV(rawCsv);
-  populateFilters(rackServers);
-  renderRooms();
-  populatePlacementRooms(rackServers);
-};
+    localStorage.setItem(
+      "serverroom_data",
+      JSON.stringify(rackServers)
+    );
 
-localStorage.setItem(
-  "serverroom_data",
-  JSON.stringify(rackServers)
-);
-    reader.readAsText(e.target.files[0]);
-  });
+    populateFilters(rackServers);
+    renderRooms();
+    populatePlacementRooms(rackServers);
+  };
 
+  reader.readAsText(e.target.files[0]);
+});
   document.getElementById("searchInput")
     .addEventListener("input", renderRooms);
 
-    document.getElementById("clearMemory")
-  ?.addEventListener("click", () => {
-    localStorage.removeItem("serverroom_csv");
-    location.reload();
-});
 
 renderPlacementAdvisor();
 
