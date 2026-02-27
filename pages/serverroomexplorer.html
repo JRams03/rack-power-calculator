@@ -577,15 +577,31 @@ function smoothScrollToDetail() {
 
   if (!content || !detail) return;
 
-  const contentRect = content.getBoundingClientRect();
-  const detailRect  = detail.getBoundingClientRect();
+  const start = content.scrollTop;
+  const end = detail.offsetTop - 20;
+  const duration = 400; // ms
 
-  const offset = detailRect.top - contentRect.top + content.scrollTop;
+  let startTime = null;
 
-  content.scrollTo({
-    top: offset - 20,
-    behavior: "smooth"
-  });
+  function animateScroll(timestamp) {
+
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // easeInOutCubic
+    const ease = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    content.scrollTop = start + (end - start) * ease;
+
+    if (progress < 1) {
+      requestAnimationFrame(animateScroll);
+    }
+  }
+
+  requestAnimationFrame(animateScroll);
 }
 
 /**********************************************************************************************/
@@ -800,14 +816,12 @@ function createRackCard({ title, rack, list }) {
   card.dataset.room = list[0]?.room || "";
   card.dataset.dc   = list[0]?.dc   || "";
 
-  // 🔥 EERST declareren
   const classification = getRackClassification(
     list[0]?.dc,
     list[0]?.room,
     rack
   );
 
-  // 🔥 DAN pas gebruiken
   if (classification) {
     card.classList.add(`type-${classification}`);
   }
@@ -839,23 +853,27 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-card.onclick = () => {
-  selectedRackId = rack;
-  currentRackServers = list;
+  card.onclick = () => {
+    selectedRackId = rack;
+    currentRackServers = list;
 
-  renderRackDetail(rack, list);
-  renderPowerSummary(rack, list);
-  showPduButton();
+    const detail = document.getElementById("rackDetail");
 
-  // 🔥 wacht tot DOM klaar is
-  requestAnimationFrame(() => {
-    smoothScrollToDetail();
-  });
-};
+    // 🔥 Reset fade eerst
+    detail.classList.remove("visible");
+
+    renderRackDetail(rack, list);
+    renderPowerSummary(rack, list);
+    showPduButton();
+
+    requestAnimationFrame(() => {
+      detail.classList.add("visible");
+      smoothScrollToDetail();
+    });
+  };
 
   return card;
 }
-
 
  /**********************************************************************************************/
 

@@ -1,5 +1,10 @@
-#content {
-  scroll-behavior: smooth !important;
+#rackDetail {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+#rackDetail.visible {
+  opacity: 1;
 }
 
 #content {
