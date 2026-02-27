@@ -572,12 +572,16 @@ function formatRackDisplay(rackId) {
 
 function smoothScrollToDetail() {
 
-  const split = document.querySelector(".main-split");
-  if (!split) return;
+  const detail = document.getElementById("rackDetail");
+  const content = document.getElementById("content");
 
-  split.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
+  if (!detail || !content) return;
+
+  const offset = detail.getBoundingClientRect().top + content.scrollTop - 20;
+
+  content.scrollTo({
+    top: offset,
+    behavior: "smooth"
   });
 }
 
@@ -1166,21 +1170,22 @@ function renderAllRooms(data) {
 
  /**********************************************************************************************/
 
- function renderRoomUnassigned(list) {
+function renderRoomUnassigned(list) {
 
   const container = document.getElementById("rackDetail");
 
   container.innerHTML = `
     <div class="rack-detail-header">
-      Room Devices Without Rack
+      Room Unassigned Devices
     </div>
 
     <div class="slot-row header">
       <div>Status</div>
       <div>Function</div>
       <div>Hostname</div>
-      <div>Serial</div>
+      <div>SLTag</div>
       <div>Account</div>
+      <div>Age</div>
     </div>
   `;
 
@@ -1195,17 +1200,15 @@ function renderAllRooms(data) {
           ${device.status || "-"}
         </span>
       </div>
-
       <div>${device.hardwareFunction || "-"}</div>
       <div>${device.hostname || "-"}</div>
       <div>${device.sltag || "-"}</div>
       <div>${device.accountId || "-"}</div>
+      <div>${formatHardwareAge(device.ageDays)}</div>
     `;
 
     container.appendChild(row);
   });
-
-  document.getElementById("powerSummary").innerHTML = "";
 }
 
 
