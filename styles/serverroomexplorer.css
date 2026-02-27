@@ -336,14 +336,14 @@
 
 .rack-divider-line {
   flex: 1;
-  height: 3px;
-  background: var(--border-light);
+  height: 5px;
+  background: #111111;
 }
 
 .rack-divider-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: #585e69;
+  color: #4a4e57;
   letter-spacing: 0.5px;
   text-transform: uppercase;
 }
