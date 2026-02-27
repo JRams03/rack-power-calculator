@@ -40,7 +40,7 @@ window.addEventListener("DOMContentLoaded", async () => {
      DATA & SEARCH
 ========================= -->
 
-<div class="welcome-note-text">
+<div id="welcomeNote" class="welcome-note hidden">
   How to use this tool correctly:
   <br><br>
   Go to <strong>IMS → Hardware Search</strong>,  
@@ -52,6 +52,25 @@ window.addEventListener("DOMContentLoaded", async () => {
   Do not edit, filter or clean the data — this tool depends on the original structure.
   <br><br>
   Clean input = reliable rack analysis.
+</div>
+
+<div id="welcomeNote" class="welcome-note hidden">
+  <div class="welcome-note-card">
+    <div class="welcome-note-title">How to use this tool correctly:</div>
+    <div class="welcome-note-text">
+        <br><br>
+        Go to <strong>IMS → Hardware Search</strong>,  
+        select your <strong>DC</strong>,  
+        click <strong>Display</strong>,  
+        then export the full result as <strong>CSV</strong>.
+        <br><br>
+        Import the file here <strong>unchanged</strong>.  
+        Do not edit, filter or clean the data — this tool depends on the original structure.
+        <br><br>
+        Clean input = reliable rack analysis.
+    </div>
+    <button id="closeWelcomeNote">Understood</button>
+  </div>
 </div>
 
 <div class="control-group">
@@ -1942,19 +1961,21 @@ if (!confirm("Clear stored rack data?")) return;
 });
 
 const noteKey = "serverroom_notice_seen";
-const noteEl = document.getElementById("welcomeNote");
+const noteEl  = document.getElementById("welcomeNote");
 const closeBtn = document.getElementById("closeWelcomeNote");
 
-// Toon alleen als nog niet gezien
-if (!sessionStorage.getItem(noteKey)) {
-  noteEl.classList.remove("hidden");
-}
+if (noteEl) {
 
-// Wegklikken
-closeBtn?.addEventListener("click", () => {
-  sessionStorage.setItem(noteKey, "true");
-  noteEl.classList.add("hidden");
-});
+  // Alleen tonen als nog niet gezien in deze sessie
+  if (!sessionStorage.getItem(noteKey)) {
+    noteEl.classList.remove("hidden");
+  }
+
+  closeBtn?.addEventListener("click", () => {
+    sessionStorage.setItem(noteKey, "true");
+    noteEl.classList.add("hidden");
+  });
+}
 
 renderPlacementAdvisor();
 
