@@ -657,6 +657,7 @@ function groupRacksByRoom(data) {
 
 /**********************************************************************************************/
 
+
 function createRoomUnassignedCard(room, list) {
 
   const roomNumber = room.replace(/\D/g,"");
@@ -665,7 +666,7 @@ function createRoomUnassignedCard(room, list) {
   card.className = "rack-card special-room-card";
 
   card.dataset.room = room;
-  card.dataset.rack = "UNASSIGNED";
+  card.dataset.rack = `ROOM-UNASSIGNED-${room}`;
 
   card.innerHTML = `
     <div class="rack-title">
@@ -676,17 +677,20 @@ function createRoomUnassignedCard(room, list) {
 
   card.onclick = () => {
 
-    // 🔥 Zorg dat state consistent is
-    selectedRackId = `UNASSIGNED-${room}`;
+    console.log("Room unassigned clicked:", room);
+
+    // 🔥 Eerst state zetten
+    selectedRackId = `ROOM-UNASSIGNED-${room}`;
     currentRackServers = list;
 
+    // 🔥 Daarna renderen
     renderRoomUnassigned(list);
 
-    // leeg power summary en pdu
+    // power + PDU leegmaken
     document.getElementById("powerSummary").innerHTML = "";
-    document.getElementById("pduLaunchContainer").innerHTML = "";
+    const pdu = document.getElementById("pduLaunchContainer");
+    if (pdu) pdu.innerHTML = "";
 
-    smoothScrollToDetail();
   };
 
   return card;
@@ -1184,6 +1188,7 @@ function renderAllRooms(data) {
  /**********************************************************************************************/
 
 function renderRoomUnassigned(list) {
+  console.log("Rendering room unassigned", list.length);
 
   const container = document.getElementById("rackDetail");
 
