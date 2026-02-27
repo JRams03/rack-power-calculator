@@ -1193,36 +1193,50 @@ function renderAllRooms(data) {
 
 function renderRacks(data, room) {
 
-const racks = {};
-const unassigned = [];
+Object.keys(racks)
+  .sort((a, b) => {
 
-data
-  .filter(s => s.room === room)
-  .forEach(s => {
+    if (a === "__ROOM_UNASSIGNED__") return -1;
+    if (b === "__ROOM_UNASSIGNED__") return 1;
 
-    // 🔴 Geen rack → room unassigned
-    if (!s.rack) {
+    return parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", ""));
+  })
+  .forEach(rack => {
 
-      if (!racks["__ROOM_UNASSIGNED__"]) {
-        racks["__ROOM_UNASSIGNED__"] = [];
-      }
+    const list = racks[rack];
 
-      racks["__ROOM_UNASSIGNED__"].push(s);
+    // 🔴 Speciale room bucket
+    if (rack === "__ROOM_UNASSIGNED__") {
+
+      const roomNumber = room.replace(/\D/g,"");
+
+      const card = document.createElement("div");
+      card.className = "rack-card special-room-card";
+
+      card.innerHTML = `
+        <div class="rack-title">
+          Server Room ${roomNumber} - Unassigned
+        </div>
+        <div>${list.length} devices</div>
+      `;
+
+      card.onclick = () => {
+        renderRoomUnassigned(list);
+        smoothScrollToDetail();
+      };
+
+      container.appendChild(card);
       return;
     }
 
-    // 🟡 Wel rack maar geen slot → rack-level unassigned
-    if (String(s.slot).trim() === "") {
-      unassigned.push(s);
-      return;
-    }
+    // 🟢 Normale rack
+    const card = createRackCard({
+      title: formatRackName(rack),
+      rack,
+      list
+    });
 
-    // 🟢 Normaal rack + slot
-    if (!racks[s.rack]) {
-      racks[s.rack] = [];
-    }
-
-    racks[s.rack].push(s);
+    container.appendChild(card);
 });
 
   const grid = document.getElementById("rackContainer");
@@ -1276,20 +1290,51 @@ card.onclick = () => {
   container.appendChild(card);
 }
 
-  Object.keys(racks)
-    .sort((a, b) => parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", "")))
-    .forEach(rack => {
+Object.keys(racks)
+  .sort((a, b) => {
 
-      const list = racks[rack];
+    if (a === "__ROOM_UNASSIGNED__") return -1;
+    if (b === "__ROOM_UNASSIGNED__") return 1;
 
-      const card = createRackCard({
-        title: formatRackName(rack),
-        rack,
-        list
-      });
+    return parseInt(a.replace("RK", "")) - parseInt(b.replace("RK", ""));
+  })
+  .forEach(rack => {
+
+    const list = racks[rack];
+
+    // 🔴 Speciale room bucket
+    if (rack === "__ROOM_UNASSIGNED__") {
+
+      const roomNumber = room.replace(/\D/g,"");
+
+      const card = document.createElement("div");
+      card.className = "rack-card special-room-card";
+
+      card.innerHTML = `
+        <div class="rack-title">
+          Server Room ${roomNumber} - Unassigned
+        </div>
+        <div>${list.length} devices</div>
+      `;
+
+      card.onclick = () => {
+        renderRoomUnassigned(list);
+        smoothScrollToDetail();
+      };
 
       container.appendChild(card);
+      return;
+    }
+
+    // 🟢 Normale rack
+    const card = createRackCard({
+      title: formatRackName(rack),
+      rack,
+      list
     });
+
+    container.appendChild(card);
+});
 }
 
  /**********************************************************************************************/
