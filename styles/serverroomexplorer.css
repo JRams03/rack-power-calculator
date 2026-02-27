@@ -404,7 +404,7 @@ html {
 .status-SPARE_POOL { background: var(--spare-pool); color: #fff; }
 .status-DEPLOY2 { background: var(--deploy2); color: #fff; }
 .status-IN_TRANSIT { background: var(--in-transit); color: #fff; }
-.status-RMA_PROCESSING { background: var(--rma-processing); color: #fff; }
+.status-RMA_-_PROCESSING { background: var(--rma-processing); color: #fff; }
 
 /* Donkere achtergronden → witte tekst */
 .status-ACTIVE,
