@@ -1373,7 +1373,41 @@ row.innerHTML = `
 
     container.appendChild(row);
   }
-}
+  
+  }
+
+/*****************************************************************/
+/* Extra equipment section (Switches / PDU / Powerstrips) */
+/*****************************************************************/
+
+container.insertAdjacentHTML("beforeend", `
+  <div class="rack-divider">
+    Infrastructure / Network Equipment
+  </div>
+`);
+
+const letterSlots = ["A","B","C","D","E","F","G","H","I","J","K"];
+
+letterSlots.forEach(letter => {
+
+  const row = document.createElement("div");
+  row.className = "slot-row infra-row";
+
+  row.innerHTML = `
+    <div>${letter}</div>
+    <div></div>
+    <div></div>
+    <div class="empty">— empty —</div>
+    <div></div>
+    <div></div>
+    <div></div>
+  `;
+
+  container.appendChild(row);
+
+});
+
+
 
  /**********************************************************************************************/
 

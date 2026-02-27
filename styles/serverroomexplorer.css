@@ -1115,5 +1115,22 @@ grid-template-columns:
   color: #9ca3af;
 }
 
+/* Divider onder U44 */
+
+.rack-divider {
+  margin: 14px 0 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Infra rows iets subtieler */
+
+.infra-row {
+  background: #f9fafb;
+}
+
 
 
