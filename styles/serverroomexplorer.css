@@ -26,7 +26,9 @@ html {
   --liquidate-prep: #ff5722;         
   --liquidation-processing: #795548;  
   --spare-pool: #00acc1;              
-  --deploy2: #e91e63;               
+  --deploy2: #e91e63;        
+  --in-transit: #b597c9;     
+  --rma-processing: #71853c;     
   --border-light: #e5e7eb;
   --border-dark: #d1d5db;
   --row-alt: #f9fafb;
@@ -401,6 +403,8 @@ html {
 .status-LIQUIDATION_PROCESSING { background: var(--liquidation-processing); color: #fff; }
 .status-SPARE_POOL { background: var(--spare-pool); color: #fff; }
 .status-DEPLOY2 { background: var(--deploy2); color: #fff; }
+.status-IN_TRANSIT { background: var(--in-transit); color: #fff; }
+.status-RMA_PROCESSING { background: var(--rma-processing); color: #fff; }
 
 /* Donkere achtergronden → witte tekst */
 .status-ACTIVE,
