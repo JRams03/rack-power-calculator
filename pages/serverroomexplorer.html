@@ -1747,10 +1747,22 @@ updatePlacementButton();
 
 document.getElementById("clearFilters")
   .addEventListener("click", () => {
+
+    // reset dropdowns
     document.querySelectorAll("#content select")
       .forEach(s => s.value = "");
+
+    // 🔥 reset selectie state
+    selectedRackId = null;
+    currentRackServers = [];
+
+    // 🔥 detail leegmaken
+    document.getElementById("rackDetail").innerHTML = "";
+    document.getElementById("powerSummary").innerHTML = "";
+    document.getElementById("placementAdvisor").innerHTML = "";
+
     renderRooms();
-  });
+});
 
 document.getElementById("csvInput").addEventListener("change", e => {
   const reader = new FileReader();
