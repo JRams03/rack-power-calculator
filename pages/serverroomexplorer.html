@@ -977,52 +977,67 @@ if (id === "filterDriveGeneric") {
 
  /**********************************************************************************************/
 
-  function parseCSV(text) {
+function parseCSV(text) {
 
-    const result = Papa.parse(text, {
-      header: true,
-      skipEmptyLines: true
+  const result = Papa.parse(text, {
+    header: true,
+    skipEmptyLines: true
+  });
+
+  return result.data
+    .filter(r => r["View Hardware"]?.includes("HYPERLINK"))
+    .map(row => {
+
+      // 🔹 Extract volledige hyperlink
+      const linkMatch = row["View Hardware"]?.match(/"(https:[^"]+)"/i);
+      let hardwareUrl = linkMatch ? linkMatch[1] : null;
+
+      if (hardwareUrl) {
+        hardwareUrl = hardwareUrl.replace("/view/", "/update/");
+      }
+
+      // 🔥 Location parsing (DE BELANGRIJKE FIX)
+      const rawLocation = (row["Location"] || "").toLowerCase();
+      const loc = rawLocation.split(".");
+
+      let slotFromLocation = "";
+
+      if (loc.length >= 4) {
+        slotFromLocation = loc[3].replace(/^sl/i, "");
+      }
+
+      // fallback naar Slot kolom als Location geen slot bevat
+      if (!slotFromLocation) {
+        slotFromLocation = (row["Slot"] || "").toString().trim();
+      }
+
+      return {
+        hostname: row["Fully Qualified Domain Name"] || "",
+        status: row["Hardware Status"] || "",
+        hardwareFunction: row["Hardware Function"] || "",
+        sltag: row["SoftLayer Serial Number"] || "",
+        accountId: row["Account Id"] || "",
+        ageDays: parseInt(row["Days old"], 10) || 0,
+        hardwareUrl: hardwareUrl,
+
+        motherboard: cleanBoardName(row["Motherboard Model"]),
+        cpu: row["Processor Model (Expand Row to view additional models)"] || "",
+        ram: row["Ram Model (Expand Row to view additional models)"] || "",
+        drives: row["Hard Drive Model (Expand Row to view additional models)"] || "",
+        controller: row["Drive Controller Model (Expand Row to view additional models)"] || "",
+        driveCapacity: row["Drive Capacity"] || "",
+        psu: row["Power Capacity"] || "",
+        unitSizeCsv: row["Unit Size"] || "",
+
+        dc:   (loc[0] || "").toUpperCase(),
+        room: (loc[1] || "").toUpperCase(),
+        rack: (loc[2] || "").toUpperCase(),
+
+       
+        slot: slotFromLocation.toUpperCase()
+      };
     });
-
-    return result.data
-      .filter(r => r["View Hardware"]?.includes("HYPERLINK"))
-      .map(row => {
-
-        // 🔹 Extract volledige hyperlink uit HYPERLINK(...)
-        const linkMatch = row["View Hardware"]?.match(/"(https:[^"]+)"/i);
-        let hardwareUrl = linkMatch ? linkMatch[1] : null;
-
-        // 🔹 view → update vervangen
-        if (hardwareUrl) {
-          hardwareUrl = hardwareUrl.replace("/view/", "/update/");
-        }
-
-        const loc = (row["Location"] || "").split(".");
-
-return {
-  hostname: row["Fully Qualified Domain Name"] || "",
-  status: row["Hardware Status"] || "",
-  hardwareFunction: row["Hardware Function"] || "",
-  sltag: row["SoftLayer Serial Number"] || "",
-  accountId: row["Account Id"] || "",
-  ageDays: parseInt(row["Days old"], 10) || 0,
-  hardwareUrl: hardwareUrl,
-  motherboard: cleanBoardName(row["Motherboard Model"]),
-  cpu: row["Processor Model (Expand Row to view additional models)"] || "",
-  ram: row["Ram Model (Expand Row to view additional models)"] || "",
-  drives: row["Hard Drive Model (Expand Row to view additional models)"] || "",
-  controller: row["Drive Controller Model (Expand Row to view additional models)"] || "",
-  driveCapacity: row["Drive Capacity"] || "",
-  psu: row["Power Capacity"] || "",
-  unitSizeCsv: row["Unit Size"] || "",
-
-  dc: (loc[0] || "").toUpperCase(),
-  room: (loc[1] || "").toUpperCase(),
-  rack: (loc[2] || "").toUpperCase(),
-  slot: (row["Slot"] || "").toString().trim().toUpperCase(),
-};
-      });
-  }
+}
 
   /**********************************************************************************************/
 
