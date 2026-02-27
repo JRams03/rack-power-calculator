@@ -572,12 +572,19 @@ function formatRackDisplay(rackId) {
 
 function smoothScrollToDetail() {
 
-  const detail = document.getElementById("rackDetail");
-  if (!detail) return;
+  const content = document.getElementById("content");
+  const detail  = document.getElementById("rackDetail");
 
-  detail.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
+  if (!content || !detail) return;
+
+  const contentRect = content.getBoundingClientRect();
+  const detailRect  = detail.getBoundingClientRect();
+
+  const offset = detailRect.top - contentRect.top + content.scrollTop;
+
+  content.scrollTo({
+    top: offset - 20,
+    behavior: "smooth"
   });
 }
 
