@@ -996,7 +996,7 @@ function parseCSV(text) {
         hardwareUrl = hardwareUrl.replace("/view/", "/update/");
       }
 
-      // 🔥 Location parsing (DE BELANGRIJKE FIX)
+      // 🔹 Location parsing
       const rawLocation = (row["Location"] || "").toLowerCase();
       const loc = rawLocation.split(".");
 
@@ -1009,6 +1009,23 @@ function parseCSV(text) {
       // fallback naar Slot kolom als Location geen slot bevat
       if (!slotFromLocation) {
         slotFromLocation = (row["Slot"] || "").toString().trim();
+      }
+
+      // 🔥 Slot normalisatie (numeriek vs intern)
+      let normalizedSlot = "";
+
+      if (slotFromLocation) {
+
+        const cleaned = slotFromLocation.toUpperCase().trim();
+
+        // numeriek slot → leading zeros verwijderen
+        if (!isNaN(cleaned)) {
+          normalizedSlot = String(parseInt(cleaned, 10));
+        } 
+        // internal slot (A–K etc)
+        else {
+          normalizedSlot = cleaned;
+        }
       }
 
       return {
@@ -1032,11 +1049,7 @@ function parseCSV(text) {
         dc:   (loc[0] || "").toUpperCase(),
         room: (loc[1] || "").toUpperCase(),
         rack: (loc[2] || "").toUpperCase(),
-
-       
-        slot: slotFromLocation
-          ? String(parseInt(slotFromLocation, 10))
-          : ""
+        slot: normalizedSlot
       };
     });
 }
