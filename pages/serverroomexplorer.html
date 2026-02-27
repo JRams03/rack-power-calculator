@@ -1251,6 +1251,13 @@ function renderUnassignedDetail(list) {
  /**********************************************************************************************/
 
 function renderRackDetail(rack, list) {
+console.log(
+  "DETAIL slots:",
+  list
+    .filter(s => !isNaN(Number(s.slot)))
+    .map(s => Number(s.slot))
+    .sort((a,b)=>a-b)
+);
 
   const container = document.getElementById("rackDetail");
 
@@ -1274,14 +1281,14 @@ function renderRackDetail(rack, list) {
 </div>
   `;
 
-  // 🔥 Maak slotMap case-consistent
+  
   const slotMap = {};
   list.forEach(s => {
     if (!s.slot) return;
     slotMap[s.slot.toString().toUpperCase()] = s;
   });
 
-  // 🔥 Numeric + Letter slots combineren
+  
   const numericSlots = Array.from({ length: MAX_SLOTS }, (_, i) => (i + 1).toString());
   const letterSlots  = ["A","B","C","D","E","F","G","H","I","J","K"];
 
@@ -1291,7 +1298,7 @@ function renderRackDetail(rack, list) {
 
  allSlots.forEach((slotKey, index) => {
 
-  // 🔥 Inject divider vóór eerste letter slot
+  
   if (slotKey === "A") {
 
     const divider = document.createElement("div");
@@ -1305,7 +1312,7 @@ function renderRackDetail(rack, list) {
     container.appendChild(divider);
   }
 
-    // skip als numeric slot al bezet door uHeight stacking
+    
     if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
       return;
     }
@@ -1416,9 +1423,15 @@ function renderRackDetail(rack, list) {
  /**********************************************************************************************/
 
 function renderPowerSummary(rack, list) {
-
+console.log(
+  "POWER slots:",
+  list
+    .filter(s => !isNaN(Number(s.slot)))
+    .map(s => Number(s.slot))
+    .sort((a,b)=>a-b)
+);
 const rackInput = list
-  .filter(s => !isNaN(Number(s.slot)))   // 🔥 alleen numerieke slots
+  .filter(s => !isNaN(Number(s.slot))) 
   .map(s => ({
     slot: Number(s.slot),
     serverProfile: findServerProfile(s.motherboard),
