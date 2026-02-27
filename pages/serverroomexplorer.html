@@ -739,6 +739,22 @@ document.getElementById("csvInput").addEventListener("change", e => {
   document.getElementById("searchInput")
     .addEventListener("input", renderRooms);
 
+    document.getElementById("clearMemory")
+  ?.addEventListener("click", () => {
+if (!confirm("Clear stored rack data?")) return;
+
+    localStorage.removeItem("serverroom_data");
+
+    rackServers = [];
+
+    document.getElementById("rackContainer").innerHTML = "";
+    document.getElementById("rackDetail").innerHTML = "";
+    document.getElementById("powerSummary").innerHTML = "";
+    document.getElementById("placementAdvisor").innerHTML = "";
+
+    location.reload(); // simpel en schoon
+});
+
 
 renderPlacementAdvisor();
 
@@ -866,7 +882,7 @@ return {
   dc: (loc[0] || "").toUpperCase(),
   room: (loc[1] || "").toUpperCase(),
   rack: (loc[2] || "").toUpperCase(),
-  slot: extractSlotNumber(loc[3])
+  slot: (row["Slot"] || "").toString().trim().toUpperCase(),
 };
       });
   }
@@ -1094,10 +1110,7 @@ data
   .forEach(s => {
 
     // Geen rack of geen slot → unassigned
-    if (!s.rack || !s.slot) {
-      unassigned.push(s);
-      return;
-    }
+     if (!s.rack || String(s.slot).trim() === "")
 
     if (!racks[s.rack]) racks[s.rack] = [];
     racks[s.rack].push(s);
