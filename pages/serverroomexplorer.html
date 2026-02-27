@@ -604,12 +604,11 @@ function smoothScrollToDetail() {
   if (!content || !detail) return;
 
   const header = detail.querySelector(".rack-detail-header");
-  const headerHeight = header ? header.offsetHeight : 0;
 
-  const target = detail.offsetTop + headerHeight - 10;
+ 
+  const target = detail.offsetTop - 60;
 
   animateScroll(content, target, 400);
-
 }
 
 
@@ -1879,15 +1878,13 @@ if (backToTop && content) {
     }
   });
 
-  backToTop.addEventListener("click", () => {
-    animateScroll(content, 0, 400)({
-      top: 0,
-      behavior: "smooth"
-    });
-  });
+backToTop.addEventListener("click", () => {
+  animateScroll(content, 0, 400);
+});
+  }
 
 }
 
-}
+
 
 </script>
