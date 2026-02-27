@@ -259,14 +259,15 @@ html {
 .slot-row {
   display: grid;
   overflow: visible;
-grid-template-columns:
-  40px      /* U */
-  110px     /* Status */
-  140px     /* Board */
-  1.8fr     /* Hostname */
-  120px     /* SLTag */
-  100px     /* Account */
-  90px;     /* Age */
+  grid-template-columns:
+    50px   /* slot */
+    90px   /* status */
+    140px  /* hardware function */
+    220px  /* board */
+    1fr    /* hostname */
+    120px  /* sltag */
+    80px   /* account */
+    90px;  /* age */
 
   font-size: 13px;
   min-height: 34px;
@@ -289,10 +290,13 @@ grid-template-columns:
   background: var(--row-alt);
 }
 
-.header {
+.slot-row.header {
   font-weight: 600;
   background: #e5e7eb;
   border-bottom: 2px solid var(--border-dark);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.4px;
 }
 
 .slot-row > div {
@@ -320,15 +324,21 @@ grid-template-columns:
 .rack-divider-line {
   flex: 1;
   height: 1px;
-  background: #d1d5db;
+  background: var(--border-light);
 }
 
 .rack-divider-title {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: #585e69;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+.hardware-function {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 
