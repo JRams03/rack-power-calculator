@@ -577,10 +577,10 @@ function smoothScrollToDetail() {
 
   if (!detail || !content) return;
 
-  const offset = detail.getBoundingClientRect().top + content.scrollTop - 20;
+  const detailTop = detail.offsetTop;
 
   content.scrollTo({
-    top: offset,
+    top: detailTop - 20,
     behavior: "smooth"
   });
 }
@@ -836,15 +836,19 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-  card.onclick = () => {
-    selectedRackId = rack;
-    currentRackServers = list;
+card.onclick = () => {
+  selectedRackId = rack;
+  currentRackServers = list;
 
-    renderRackDetail(rack, list);
-    renderPowerSummary(rack, list);
-    showPduButton();
+  renderRackDetail(rack, list);
+  renderPowerSummary(rack, list);
+  showPduButton();
+
+  // 🔥 wacht tot DOM klaar is
+  requestAnimationFrame(() => {
     smoothScrollToDetail();
-  };
+  });
+};
 
   return card;
 }
