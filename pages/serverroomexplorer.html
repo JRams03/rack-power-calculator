@@ -1417,8 +1417,10 @@ function renderRackDetail(rack, list) {
 
 function renderPowerSummary(rack, list) {
 
-  const rackInput = list.map(s => ({
-    slot: s.slot,
+const rackInput = list
+  .filter(s => !isNaN(Number(s.slot)))   // 🔥 alleen numerieke slots
+  .map(s => ({
+    slot: Number(s.slot),
     serverProfile: findServerProfile(s.motherboard),
     utilization: "normal"
   }));
