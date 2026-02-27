@@ -309,6 +309,28 @@ grid-template-columns:
   color: #9ca3af;
 }
 
+.rack-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 10px;
+  grid-column: 1 / -1; /* volledige breedte */
+}
+
+.rack-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #d1d5db;
+}
+
+.rack-divider-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 
 
 /* =========================================================
