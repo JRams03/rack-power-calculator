@@ -577,7 +577,8 @@ function animateScroll(container, target, duration = 400) {
 
   function animation(currentTime) {
 
-    if (!startTime) startTime = currentTime;
+    if (startTime === null) startTime = currentTime;
+
     const elapsed = currentTime - startTime;
     const progress = Math.min(elapsed / duration, 1);
 
@@ -609,27 +610,8 @@ function smoothScrollToDetail() {
 
   animateScroll(content, target, 400);
 
-
-  function animateScroll(timestamp) {
-
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    // easeInOutCubic
-    const ease = progress < 0.5
-      ? 4 * progress * progress * progress
-      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-    content.scrollTop = start + (end - start) * ease;
-
-    if (progress < 1) {
-      requestAnimationFrame(animateScroll);
-    }
-  }
-
-  requestAnimationFrame(animateScroll);
 }
+
 
 /**********************************************************************************************/
 
