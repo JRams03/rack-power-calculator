@@ -604,8 +604,14 @@ function getRackClassification(dc, room, rack) {
 
 function init() {
 
-// 🔹 Check of er opgeslagen CSV is
-const savedCsv = localStorage.getItem("serverroom_csv");
+const savedData = localStorage.getItem("serverroom_data");
+
+if (savedData) {
+  rackServers = JSON.parse(savedData);
+  populateFilters(rackServers);
+  renderRooms();
+  populatePlacementRooms(rackServers);
+}
 
 if (savedCsv) {
   rackServers = parseCSV(savedCsv);
@@ -720,14 +726,18 @@ reader.onload = evt => {
 
   const rawCsv = evt.target.result;
 
-  // 🔹 Sla CSV op in browser geheugen
-  localStorage.setItem("serverroom_csv", rawCsv);
+
 
   rackServers = parseCSV(rawCsv);
   populateFilters(rackServers);
   renderRooms();
   populatePlacementRooms(rackServers);
 };
+
+localStorage.setItem(
+  "serverroom_data",
+  JSON.stringify(rackServers)
+);
     reader.readAsText(e.target.files[0]);
   });
 
