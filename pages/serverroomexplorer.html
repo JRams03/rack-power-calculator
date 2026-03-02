@@ -1334,9 +1334,12 @@ function renderRackDetail(rack, list) {
   `;
 
   // 🔥 Rack object isoleren
-  const rackObject = list.find(d =>
-    (d.hardwareFunction || "").toLowerCase() === "rack"
-  );
+const rackObject = list.find(d =>
+  (d.hardwareFunction || "")
+    .trim()
+    .toLowerCase()
+    .includes("rack")
+);
 
   // 🔥 Slot map bouwen (rack object uitsluiten)
   const slotMap = {};
