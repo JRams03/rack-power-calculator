@@ -1302,13 +1302,6 @@ function renderUnassignedDetail(list) {
  /**********************************************************************************************/
 
 function renderRackDetail(rack, list) {
-console.log(
-  "DETAIL slots:",
-  list
-    .filter(s => !isNaN(Number(s.slot)))
-    .map(s => Number(s.slot))
-    .sort((a,b)=>a-b)
-);
 
   const container = document.getElementById("rackDetail");
 
@@ -1320,138 +1313,70 @@ console.log(
       <div class="rack-header-right" id="pduLaunchContainer"></div>
     </div>
 
-<div class="slot-row header">
-  <div>#</div>
-  <div>Status</div>
-  <div>Hardware</div>
-  <div>Board</div>
-  <div>Hostname</div>
-  <div>SLTag</div>
-  <div>Account</div>
-  <div>Age</div>
-</div>
+    <div class="slot-row header">
+      <div>#</div>
+      <div>Status</div>
+      <div>Hardware</div>
+      <div>Board</div>
+      <div>Hostname</div>
+      <div>SLTag</div>
+      <div>Account</div>
+      <div>Age</div>
+    </div>
   `;
 
-  
   const slotMap = {};
   list.forEach(s => {
     if (!s.slot) return;
     slotMap[s.slot.toString().toUpperCase()] = s;
   });
 
-  
-  const numericSlots = Array.from({ length: MAX_SLOTS }, (_, i) => (i + 1).toString());
-  const letterSlots  = ["A","B","C","D","E","F","G","H","I","J","K"];
-
-  const allSlots = [...numericSlots, ...letterSlots];
-
   const occupied = new Set();
 
- allSlots.forEach((slotKey, index) => {
-if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
-  console.log("Skipping slot due to occupied:", slotKey);
-}
-  
-  if (slotKey === "A") {
+  /* ---------------- NUMERIC SLOTS ---------------- */
 
-    const divider = document.createElement("div");
-    divider.className = "rack-divider";
-    divider.innerHTML = `
-      <div class="rack-divider-line"></div>
-      <div class="rack-divider-title">Internal Slots</div>
-      <div class="rack-divider-line"></div>
-    `;
+  for (let i = 1; i <= MAX_SLOTS; i++) {
 
-    container.appendChild(divider);
-  }
+    if (occupied.has(i)) continue;
 
-    if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
-      return;
-    }
+    const slotKey = i.toString();
+    const server = slotMap[slotKey];
 
     const row = document.createElement("div");
     row.className = "slot-row";
 
-    const server = slotMap[slotKey];
-
     if (server) {
 
-      const isNumeric = !isNaN(slotKey);
-
       let uHeight = 1;
+      const profile = findServerProfile(server.motherboard);
+      uHeight = profile?.uHeight || 1;
 
-      if (isNumeric) {
-        const profile = findServerProfile(server.motherboard);
-        uHeight = profile?.uHeight || 1;
-
-        // markeer onderliggende slots als bezet
-        for (let u = 0; u < uHeight; u++) {
-          occupied.add(Number(slotKey) + u);
-        }
-
-        row.style.gridRow = `span ${uHeight}`;
-        row.style.height = `${34 * uHeight}px`;
+      for (let u = 0; u < uHeight; u++) {
+        occupied.add(i + u);
       }
+
+      row.style.gridRow = `span ${uHeight}`;
+      row.style.height = `${34 * uHeight}px`;
 
       row.innerHTML = `
         <div>${slotKey}</div>
-            <div>
-              <span class="status-badge ${statusClass(server.status)}">
-                ${server.status}
-              </span>
-            </div>
-            
-            <div class="hardware-function">
-              ${server.hardwareFunction || "-"}
-            </div>
-            
-            <div class="board-cell">
-          <span class="hardware-icon">
-            <svg class="hw-icon" viewBox="0 0 24 24">
-              <rect x="3" y="5" width="18" height="4" rx="1"></rect>
-              <rect x="3" y="11" width="18" height="4" rx="1"></rect>
-              <rect x="3" y="17" width="18" height="2" rx="1"></rect>
-            </svg>
-            <div class="hardware-tooltip">
-              ${buildHardwareTooltip(server)}
-            </div>
-          </span>
-          <span class="board-name">
-            ${server.motherboard || server.model || "-"}
-          </span>
-        </div>
-
-        <div class="hostname">${server.hostname || "-"}</div>
-
         <div>
-          ${
-            server.hardwareUrl
-              ? `<a href="${server.hardwareUrl}"
-                   target="_blank"
-                   class="rack-link">
-                   ${server.sltag || "-"}
-                 </a>`
-              : (server.sltag || "-")
-          }
+          <span class="status-badge ${statusClass(server.status)}">
+            ${server.status || "-"}
+          </span>
         </div>
-
+        <div class="hardware-function">
+          ${server.hardwareFunction || "-"}
+        </div>
+        <div class="board-cell">
+          <span class="board-name">
+            ${server.motherboard || "-"}
+          </span>
+        </div>
+        <div class="hostname">${server.hostname || "-"}</div>
+        <div>${server.sltag || "-"}</div>
         <div>${server.accountId || "-"}</div>
-
-        <div class="age-cell">
-          ${formatHardwareAge(server.ageDays)}
-          ${
-            isOlderThanSixYears(server.ageDays)
-              ? `
-                <span class="age-warning-wrapper">
-                  <span class="age-warning">!</span>
-                  <span class="age-tooltip">
-                    Warning: server is older than 6 years
-                  </span>
-                </span>
-              `
-              : ""
-          }
-        </div>
+        <div>${formatHardwareAge(server.ageDays)}</div>
       `;
 
     } else {
@@ -1464,14 +1389,120 @@ if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
         <div></div>
         <div></div>
         <div></div>
+        <div></div>
       `;
     }
 
     container.appendChild(row);
+  }
 
+  /* ---------------- INTERNAL SLOTS DIVIDER ---------------- */
+
+  const internalDivider = document.createElement("div");
+  internalDivider.className = "rack-divider";
+  internalDivider.innerHTML = `
+    <div class="rack-divider-line"></div>
+    <div class="rack-divider-title">Internal Slots</div>
+    <div class="rack-divider-line"></div>
+  `;
+  container.appendChild(internalDivider);
+
+  /* ---------------- LETTER SLOTS ---------------- */
+
+  const letterSlots = ["A","B","C","D","E","F","G","H","I","J","K"];
+
+  letterSlots.forEach(slotKey => {
+
+    const server = slotMap[slotKey];
+    const row = document.createElement("div");
+    row.className = "slot-row";
+
+    if (server) {
+
+      row.innerHTML = `
+        <div>${slotKey}</div>
+        <div>
+          <span class="status-badge ${statusClass(server.status)}">
+            ${server.status || "-"}
+          </span>
+        </div>
+        <div class="hardware-function">
+          ${server.hardwareFunction || "-"}
+        </div>
+        <div class="board-cell">
+          <span class="board-name">
+            ${server.motherboard || "-"}
+          </span>
+        </div>
+        <div class="hostname">${server.hostname || "-"}</div>
+        <div>${server.sltag || "-"}</div>
+        <div>${server.accountId || "-"}</div>
+        <div>${formatHardwareAge(server.ageDays)}</div>
+      `;
+
+    } else {
+
+      row.innerHTML = `
+        <div>${slotKey}</div>
+        <div></div>
+        <div></div>
+        <div class="empty">— empty —</div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      `;
+    }
+
+    container.appendChild(row);
   });
-}
 
+  /* ---------------- RACK DIVIDER ---------------- */
+
+  const rackDivider = document.createElement("div");
+  rackDivider.className = "rack-divider";
+  rackDivider.innerHTML = `
+    <div class="rack-divider-line"></div>
+    <div class="rack-divider-title">Rack</div>
+    <div class="rack-divider-line"></div>
+  `;
+  container.appendChild(rackDivider);
+
+  /* ---------------- RACK ROW (#) ---------------- */
+
+  const rackObject = list.find(s =>
+    (s.hardwareFunction || "").toLowerCase() === "rack"
+  );
+
+  if (rackObject) {
+
+    const rackRow = document.createElement("div");
+    rackRow.className = "slot-row";
+
+    rackRow.innerHTML = `
+      <div>#</div>
+      <div>
+        <span class="status-badge ${statusClass(rackObject.status)}">
+          ${rackObject.status || "-"}
+        </span>
+      </div>
+      <div class="hardware-function">
+        ${rackObject.hardwareFunction || "Rack"}
+      </div>
+      <div class="board-cell">
+        <span class="board-name">
+          ${rackObject.motherboard || "-"}
+        </span>
+      </div>
+      <div class="hostname">${rackObject.hostname || "-"}</div>
+      <div>${rackObject.sltag || "-"}</div>
+      <div>${rackObject.accountId || "-"}</div>
+      <div>${formatHardwareAge(rackObject.ageDays)}</div>
+    `;
+
+    container.appendChild(rackRow);
+  }
+}
  /**********************************************************************************************/
 
 function renderPowerSummary(rack, list) {
