@@ -1,16 +1,13 @@
-body {
-  font-family: Arial, sans-serif;
-  padding: 24px;
-}
+/* Inventoryparts page content styling only */
 
-h1 {
+#content h2 {
   margin-bottom: 20px;
 }
 
 .control-bar {
   display: flex;
   gap: 12px;
-  margin-bottom: 16px;
+  margin: 20px 0 20px 0;
 }
 
 .control-bar input,
@@ -18,8 +15,12 @@ h1 {
   height: 36px;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
   font-size: 13px;
+}
+
+/* Alleen input styling, geen globale borders overschrijven */
+.control-bar input {
+  border: 1px solid #d1d5db;
 }
 
 .control-bar input:focus {
@@ -42,13 +43,16 @@ h1 {
   transform: translateY(-1px);
 }
 
+/* Table */
+
 .table-grid {
   display: flex;
   flex-direction: column;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: auto;
   max-height: 70vh;
+  background: #ffffff;
 }
 
 .table-row {
@@ -73,6 +77,6 @@ h1 {
 }
 
 .stat-box {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   font-weight: 600;
 }
