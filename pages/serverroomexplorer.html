@@ -1034,26 +1034,23 @@ function parseCSV(text) {
 
        // 🔥 Slot normalisatie (numeriek vs intern vs rack)
        let normalizedSlot = "";
-       
-       const hardwareFunctionRaw = (row["Hardware Function"] || "").trim().toLowerCase();
-       
-       if (hardwareFunctionRaw === "rack") {
-         // 🔥 Rack krijgt virtueel slot
-         normalizedSlot = "#";
-       }
-       else if (slotFromLocation) {
-       
-         const cleaned = slotFromLocation.toUpperCase().trim();
-       
-         // numeriek slot → leading zeros verwijderen
-         if (!isNaN(cleaned)) {
-           normalizedSlot = String(parseInt(cleaned, 10));
-         } 
-         // internal slot (A–K etc)
-         else {
-           normalizedSlot = cleaned;
-         }
-       }
+      
+        const hardwareFunctionRaw = (row["Hardware Function"] || "")
+          .trim()
+          .toLowerCase();
+        
+        if (hardwareFunctionRaw.includes("rack")) {
+          normalizedSlot = "#";
+        }
+        else if (slotFromLocation) {
+          const cleaned = slotFromLocation.toUpperCase().trim();
+        
+          if (!isNaN(cleaned)) {
+            normalizedSlot = String(parseInt(cleaned, 10));
+          } else {
+            normalizedSlot = cleaned;
+          }
+        }
 
       return {
         hostname: row["Fully Qualified Domain Name"] || "",
