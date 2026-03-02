@@ -1032,25 +1032,28 @@ function parseCSV(text) {
         slotFromLocation = (row["Slot"] || "").toString().trim();
       }
 
-       // 🔥 Slot normalisatie (numeriek vs intern vs rack)
-       let normalizedSlot = "";
-      
-        const hardwareFunctionRaw = (row["Hardware Function"] || "")
-          .trim()
-          .toLowerCase();
-        
-        if (hardwareFunctionRaw.includes("rack")) {
-          normalizedSlot = "#";
-        }
-        else if (slotFromLocation) {
-          const cleaned = slotFromLocation.toUpperCase().trim();
-        
-          if (!isNaN(cleaned)) {
-            normalizedSlot = String(parseInt(cleaned, 10));
-          } else {
-            normalizedSlot = cleaned;
-          }
-        }
+// 🔥 Slot normalisatie
+let normalizedSlot = "";
+
+const hardwareFunctionRaw = (row["Hardware Function"] || "")
+  .trim()
+  .toLowerCase();
+
+// 🔥 Rack altijd slot "#"
+if (hardwareFunctionRaw.includes("rack")) {
+  normalizedSlot = "#";
+}
+else if (slotFromLocation) {
+
+  const cleaned = slotFromLocation.toUpperCase().trim();
+
+  // numeriek → leading zero fix
+  if (!isNaN(cleaned)) {
+    normalizedSlot = String(parseInt(cleaned, 10));
+  } else {
+    normalizedSlot = cleaned;
+  }
+}
 
       return {
         hostname: row["Fully Qualified Domain Name"] || "",
