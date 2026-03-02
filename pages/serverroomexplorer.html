@@ -1469,64 +1469,67 @@ const rackObject = list.find(d =>
     container.appendChild(row);
   });
 
-  // 🔥 RACK SECTION
+//  RACK SECTION
 
-  if (rackObject) {
+const rackDivider = document.createElement("div");
+rackDivider.className = "rack-divider";
+rackDivider.innerHTML = `
+  <div class="rack-divider-line"></div>
+  <div class="rack-divider-title">Rack</div>
+  <div class="rack-divider-line"></div>
+`;
+container.appendChild(rackDivider);
 
-    const rackDivider = document.createElement("div");
-    rackDivider.className = "rack-divider";
-    rackDivider.innerHTML = `
-      <div class="rack-divider-line"></div>
-      <div class="rack-divider-title">Rack</div>
-      <div class="rack-divider-line"></div>
-    `;
-    container.appendChild(rackDivider);
+// zoek rack entry op basis van rack naam
+const rackEntry = list.find(d =>
+  (d.rack || "").toUpperCase() === rack.toUpperCase() &&
+  (d.hardwareFunction || "").toLowerCase().includes("rack")
+);
 
-    const rackRow = document.createElement("div");
-    rackRow.className = "slot-row rack-row";
+const rackRow = document.createElement("div");
+rackRow.className = "slot-row rack-row";
 
-    rackRow.innerHTML = `
-      <div>#</div>
+rackRow.innerHTML = `
+  <div>#</div>
 
-      <div>
-        <span class="status-badge ${statusClass(rackObject.status)}">
-          ${rackObject.status}
-        </span>
-      </div>
+  <div>
+    <span class="status-badge ${statusClass(rackEntry?.status || "TOTAL")}">
+      ${rackEntry?.status || "RACK"}
+    </span>
+  </div>
 
-      <div class="hardware-function">
-        ${rackObject.hardwareFunction}
-      </div>
+  <div class="hardware-function">
+    ${rackEntry?.hardwareFunction || "Rack"}
+  </div>
 
-      <div class="board-cell">
-        <span class="board-name">
-          ${rackObject.motherboard || rack}
-        </span>
-      </div>
+  <div class="board-cell">
+    <span class="board-name">
+      ${rack}
+    </span>
+  </div>
 
-      <div class="hostname">
-        ${rackObject.hostname || "-"}
-      </div>
+  <div class="hostname">
+    ${rackEntry?.hostname || "-"}
+  </div>
 
-      <div>
-        ${
-          rackObject.hardwareUrl
-            ? `<a href="${rackObject.hardwareUrl}" target="_blank" class="rack-link">
-                 ${rackObject.sltag || "-"}
-               </a>`
-            : (rackObject.sltag || "-")
-        }
-      </div>
+  <div>
+    ${
+      rackEntry?.hardwareUrl
+        ? `<a href="${rackEntry.hardwareUrl}" target="_blank" class="rack-link">
+             ${rackEntry.sltag || "-"}
+           </a>`
+        : (rackEntry?.sltag || "-")
+    }
+  </div>
 
-      <div>${rackObject.accountId || "-"}</div>
+  <div>${rackEntry?.accountId || "-"}</div>
 
-      <div class="age-cell">
-        ${formatHardwareAge(rackObject.ageDays)}
-      </div>
-    `;
+  <div class="age-cell">
+    ${rackEntry ? formatHardwareAge(rackEntry.ageDays) : "-"}
+  </div>
+`;
 
-    container.appendChild(rackRow);
-  }
+container.appendChild(rackRow);
 }
 
  /**********************************************************************************************/
