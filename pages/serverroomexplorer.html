@@ -1032,22 +1032,28 @@ function parseCSV(text) {
         slotFromLocation = (row["Slot"] || "").toString().trim();
       }
 
-      // 🔥 Slot normalisatie (numeriek vs intern)
-      let normalizedSlot = "";
-
-      if (slotFromLocation) {
-
-        const cleaned = slotFromLocation.toUpperCase().trim();
-
-        // numeriek slot → leading zeros verwijderen
-        if (!isNaN(cleaned)) {
-          normalizedSlot = String(parseInt(cleaned, 10));
-        } 
-        // internal slot (A–K etc)
-        else {
-          normalizedSlot = cleaned;
-        }
-      }
+       // 🔥 Slot normalisatie (numeriek vs intern vs rack)
+       let normalizedSlot = "";
+       
+       const hardwareFunctionRaw = (row["Hardware Function"] || "").trim().toLowerCase();
+       
+       if (hardwareFunctionRaw === "rack") {
+         // 🔥 Rack krijgt virtueel slot
+         normalizedSlot = "#";
+       }
+       else if (slotFromLocation) {
+       
+         const cleaned = slotFromLocation.toUpperCase().trim();
+       
+         // numeriek slot → leading zeros verwijderen
+         if (!isNaN(cleaned)) {
+           normalizedSlot = String(parseInt(cleaned, 10));
+         } 
+         // internal slot (A–K etc)
+         else {
+           normalizedSlot = cleaned;
+         }
+       }
 
       return {
         hostname: row["Fully Qualified Domain Name"] || "",
@@ -1303,14 +1309,6 @@ function renderUnassignedDetail(list) {
 
 function renderRackDetail(rack, list) {
 
-  console.log(
-    "DETAIL slots:",
-    list
-      .filter(s => !isNaN(Number(s.slot)))
-      .map(s => Number(s.slot))
-      .sort((a,b)=>a-b)
-  );
-
   const container = document.getElementById("rackDetail");
 
   container.innerHTML = `
@@ -1333,25 +1331,12 @@ function renderRackDetail(rack, list) {
     </div>
   `;
 
-  // 🔥 Rack object isoleren
-const rackObject = list.find(d =>
-  (d.hardwareFunction || "")
-    .trim()
-    .toLowerCase()
-    .includes("rack")
-);
-
-  // 🔥 Slot map bouwen (rack object uitsluiten)
+  // 🔥 Slot map bouwen (nu inclusief "#")
   const slotMap = {};
   list.forEach(s => {
 
-    if ((s.hardwareFunction || "").toLowerCase() === "rack") {
-      return; // rack niet in normale slots
-    }
-
     if (!s.slot) return;
 
-    // leading zero fix
     const normalizedSlot = !isNaN(Number(s.slot))
       ? String(Number(s.slot))
       : s.slot.toUpperCase();
@@ -1361,18 +1346,33 @@ const rackObject = list.find(d =>
 
   const numericSlots = Array.from({ length: MAX_SLOTS }, (_, i) => (i + 1).toString());
   const letterSlots  = ["A","B","C","D","E","F","G","H","I","J","K"];
-  const allSlots = [...numericSlots, ...letterSlots];
+
+  // 🔥 Rack slot toevoegen
+  const allSlots = [...numericSlots, ...letterSlots, "#"];
 
   const occupied = new Set();
 
-  allSlots.forEach((slotKey) => {
+  allSlots.forEach(slotKey => {
 
+    // 🔥 Divider voor internal slots
     if (slotKey === "A") {
       const divider = document.createElement("div");
       divider.className = "rack-divider";
       divider.innerHTML = `
         <div class="rack-divider-line"></div>
         <div class="rack-divider-title">Internal Slots</div>
+        <div class="rack-divider-line"></div>
+      `;
+      container.appendChild(divider);
+    }
+
+    // 🔥 Divider voor rack
+    if (slotKey === "#") {
+      const divider = document.createElement("div");
+      divider.className = "rack-divider";
+      divider.innerHTML = `
+        <div class="rack-divider-line"></div>
+        <div class="rack-divider-title">Rack</div>
         <div class="rack-divider-line"></div>
       `;
       container.appendChild(divider);
@@ -1468,68 +1468,6 @@ const rackObject = list.find(d =>
 
     container.appendChild(row);
   });
-
-//  RACK SECTION
-
-const rackDivider = document.createElement("div");
-rackDivider.className = "rack-divider";
-rackDivider.innerHTML = `
-  <div class="rack-divider-line"></div>
-  <div class="rack-divider-title">Rack</div>
-  <div class="rack-divider-line"></div>
-`;
-container.appendChild(rackDivider);
-
-// zoek rack entry op basis van rack naam
-const rackEntry = list.find(d =>
-  (d.rack || "").toUpperCase() === rack.toUpperCase() &&
-  (d.hardwareFunction || "").toLowerCase().includes("rack")
-);
-
-const rackRow = document.createElement("div");
-rackRow.className = "slot-row rack-row";
-
-rackRow.innerHTML = `
-  <div>#</div>
-
-  <div>
-    <span class="status-badge ${statusClass(rackEntry?.status || "TOTAL")}">
-      ${rackEntry?.status || "RACK"}
-    </span>
-  </div>
-
-  <div class="hardware-function">
-    ${rackEntry?.hardwareFunction || "Rack"}
-  </div>
-
-  <div class="board-cell">
-    <span class="board-name">
-      ${rack}
-    </span>
-  </div>
-
-  <div class="hostname">
-    ${rackEntry?.hostname || "-"}
-  </div>
-
-  <div>
-    ${
-      rackEntry?.hardwareUrl
-        ? `<a href="${rackEntry.hardwareUrl}" target="_blank" class="rack-link">
-             ${rackEntry.sltag || "-"}
-           </a>`
-        : (rackEntry?.sltag || "-")
-    }
-  </div>
-
-  <div>${rackEntry?.accountId || "-"}</div>
-
-  <div class="age-cell">
-    ${rackEntry ? formatHardwareAge(rackEntry.ageDays) : "-"}
-  </div>
-`;
-
-container.appendChild(rackRow);
 }
 
  /**********************************************************************************************/
