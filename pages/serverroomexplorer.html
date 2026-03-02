@@ -1365,30 +1365,7 @@ if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
     container.appendChild(divider);
   }
 
-  // 🔹 Rack Divider + Rack Info Row
-const rackDivider = document.createElement("div");
-rackDivider.className = "rack-divider";
-rackDivider.innerHTML = `
-  <div class="rack-divider-line"></div>
-  <div class="rack-divider-title">Rack</div>
-  <div class="rack-divider-line"></div>
-`;
 
-container.appendChild(rackDivider);
-
-// 🔹 Rack Info Row
-const rackRow = document.createElement("div");
-rackRow.className = "slot-row rack-info-row";
-
-rackRow.innerHTML = `
-  <div>#</div>
-  <div></div>
-  <div>Rack</div>
-  <div>Rack</div>
-  <div>-</div>
-  <div>-</div>
-  <div>-</div>
-`;
 
 container.appendChild(rackRow);
 
