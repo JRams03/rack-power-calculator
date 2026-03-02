@@ -55,7 +55,6 @@ export function suggestBestPlacement(
 
  for (const rack of racksToEvaluate) {
 
-  // 🚫 Skip racks without A–E occupied
   if (!rackHasInternalSlotOccupied(rack)) continue;
 
     // 1️⃣ Rack-level analysis
@@ -72,7 +71,6 @@ export function suggestBestPlacement(
 
     const rackPenalty = calculateRackPenalty(rackAnalysis);
 
-    // 2️⃣ Slot-level suggestion
     const slotSuggestion = suggestBestSlotFn(
       serverProfile,
       rack.servers
@@ -80,10 +78,8 @@ export function suggestBestPlacement(
 
     if (!slotSuggestion) continue;
 
-    // 3️⃣ Slot score (comes directly from slotAdvisor)
     const slotScore = slotSuggestion.score;
 
-    // 4️⃣ Combine rack + slot score
     const finalScore =
       rackPenalty * 0.4 +
       slotScore * 0.6;

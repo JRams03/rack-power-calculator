@@ -159,8 +159,14 @@
   color: #000000 !important;
 }
 
+.type-AGG {
+  background: #c7802f;  
+  color: #000000 !important;
+}
+
 .rack-card.type-INTERNAL,
 .rack-card.type-STORAGE,
+.rack-card.type-AGG,
 .rack-card.type-NO_PROV,
 .rack-card.type-COD {
   filter: brightness(0.97);
