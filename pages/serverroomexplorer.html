@@ -1447,9 +1447,21 @@ function renderRackDetail(rack, list) {
 
         <div>${server.accountId || "-"}</div>
 
-        <div class="age-cell">
-          ${formatHardwareAge(server.ageDays)}
-        </div>
+         <div class="age-cell">
+           ${formatHardwareAge(server.ageDays)}
+           ${
+             isOlderThanSixYears(server.ageDays)
+               ? `
+                 <span class="age-warning-wrapper">
+                   <span class="age-warning">!</span>
+                   <span class="age-tooltip">
+                     Warning: server is older than 6 years
+                   </span>
+                 </span>
+               `
+               : ""
+           }
+         </div>
       `;
 
     } else {
