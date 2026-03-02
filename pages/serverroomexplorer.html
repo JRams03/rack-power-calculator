@@ -1365,52 +1365,6 @@ if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
     container.appendChild(divider);
   }
 
-    /* ---------------- RACK DIVIDER ---------------- */
-
-  const rackDivider = document.createElement("div");
-  rackDivider.className = "rack-divider";
-  rackDivider.innerHTML = `
-    <div class="rack-divider-line"></div>
-    <div class="rack-divider-title">Rack</div>
-    <div class="rack-divider-line"></div>
-  `;
-  container.appendChild(rackDivider);
-
-  /* ---------------- RACK ROW (#) ---------------- */
-
-  const rackObject = list.find(s =>
-    (s.hardwareFunction || "").toLowerCase() === "rack"
-  );
-
-  if (rackObject) {
-
-    const rackRow = document.createElement("div");
-    rackRow.className = "slot-row";
-
-    rackRow.innerHTML = `
-      <div>#</div>
-      <div>
-        <span class="status-badge ${statusClass(rackObject.status)}">
-          ${rackObject.status || "-"}
-        </span>
-      </div>
-      <div class="hardware-function">
-        ${rackObject.hardwareFunction || "Rack"}
-      </div>
-      <div class="board-cell">
-        <span class="board-name">
-          ${rackObject.motherboard || "-"}
-        </span>
-      </div>
-      <div class="hostname">${rackObject.hostname || "-"}</div>
-      <div>${rackObject.sltag || "-"}</div>
-      <div>${rackObject.accountId || "-"}</div>
-      <div>${formatHardwareAge(rackObject.ageDays)}</div>
-    `;
-
-    container.appendChild(rackRow);
-  }
-
     if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
       return;
     }
