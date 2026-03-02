@@ -1365,6 +1365,47 @@ if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
     container.appendChild(divider);
   }
 
+// 🔥 RACK SECTION
+
+const rackDivider = document.createElement("div");
+rackDivider.className = "rack-divider";
+rackDivider.innerHTML = `
+  <div class="rack-divider-line"></div>
+  <div class="rack-divider-title">Rack</div>
+  <div class="rack-divider-line"></div>
+`;
+container.appendChild(rackDivider);
+
+const rackRow = document.createElement("div");
+rackRow.className = "slot-row rack-row";
+
+rackRow.innerHTML = `
+  <div>#</div>
+
+  <div>
+    <span class="status-badge status-TOTAL">
+      RACK
+    </span>
+  </div>
+
+  <div class="hardware-function">
+    Rack
+  </div>
+
+  <div class="board-cell">
+    <span class="board-name">
+      ${rack}
+    </span>
+  </div>
+
+  <div>-</div>
+  <div>-</div>
+  <div>-</div>
+  <div>-</div>
+`;
+
+container.appendChild(rackRow);
+
     if (!isNaN(slotKey) && occupied.has(Number(slotKey))) {
       return;
     }
