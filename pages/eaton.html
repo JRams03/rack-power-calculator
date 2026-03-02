@@ -1326,23 +1326,24 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const rackData = JSON.parse(rackDataRaw);
 
-      rackData.forEach(server => {
+rackData.forEach(server => {
 
-        if (!server.slot) return;
+  const slot = Number(server.slot);
+  if (!slot || slot < 1 || slot > TOTAL_SLOTS) return;
 
-        const profile = servers.find(s =>
-          server.motherboard?.toLowerCase().includes(
-            s.baseId?.toLowerCase()
-          )
-        );
+  const profile = servers.find(s =>
+    server.motherboard?.toLowerCase().includes(
+      s.baseId?.toLowerCase()
+    )
+  );
 
-        if (!profile) return;
+  if (!profile) return;
 
-        setSlot(server.slot, "serverId", profile.id);
-        setSlot(server.slot, "utilization", DEFAULT_UTIL);
+  setSlot(slot, "serverId", profile.id);
+  setSlot(slot, "utilization", DEFAULT_UTIL);
 
-        blockSlots(server.slot, profile.uHeight ?? 1);
-      });
+  blockSlots(slot, profile.uHeight ?? 1);
+});
 
       render();
     }

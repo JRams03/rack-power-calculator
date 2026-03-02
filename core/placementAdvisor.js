@@ -24,6 +24,20 @@ import { analyzeRack, calculateRackPenalty } from "./rackAnalysis.js";
  */
 
 
+function rackHasInternalSlotOccupied(rack) {
+
+  const internalSlots = ["A","B","C","D","E"];
+
+  return rack.servers.some(server => {
+
+    if (!server.slot) return false;
+
+    const slot = server.slot.toString().toUpperCase();
+
+    return internalSlots.includes(slot);
+  });
+}
+
 
 export function suggestBestPlacement(
   serverProfile,
@@ -39,7 +53,10 @@ export function suggestBestPlacement(
 
   const results = [];
 
-  for (const rack of racksToEvaluate) {
+ for (const rack of racksToEvaluate) {
+
+  // 🚫 Skip racks without A–E occupied
+  if (!rackHasInternalSlotOccupied(rack)) continue;
 
     // 1️⃣ Rack-level analysis
     const rackServersForAnalysis = rack.servers.map(s => ({
