@@ -1071,7 +1071,8 @@ else if (slotFromLocation) {
         accountId: row["Account Id"] || "",
         ageDays: parseInt(row["Days old"], 10) || 0,
         hardwareUrl: hardwareUrl,
-
+        manufacturer: row["Manufacturer"] || "",
+        model: row["Model"] || "",
         motherboard: cleanBoardName(row["Motherboard Model"]),
         cpu: row["Processor Model (Expand Row to view additional models)"] || "",
         ram: row["Ram Model (Expand Row to view additional models)"] || "",
@@ -1192,6 +1193,28 @@ function renderRooms() {
 
  /**********************************************************************************************/
 
+ function getBoardDisplay(device) {
+
+  const func = (device.hardwareFunction || "").toLowerCase();
+
+  // Switch
+  if (func.includes("switch")) {
+    return device.model || device.motherboard || "-";
+  }
+
+  // Powerstrip
+  if (
+    func.includes("power") ||
+    func.includes("pdu") ||
+    func.includes("strip")
+  ) {
+    return device.manufacturer || "-";
+  }
+
+  // Default (servers etc)
+  return device.motherboard || device.model || "-";
+}
+
 
 function renderRacks(data, room) {
 
@@ -1270,9 +1293,9 @@ function renderUnassignedDetail(list) {
             ${buildHardwareTooltip(server)}
           </div>
         </span>
-        <span class="board-name">
-          ${server.motherboard || "-"}
-        </span>
+         <span class="board-name">
+           ${getBoardDisplay(server)}
+         </span>
       </div>
 
       <div class="hostname">${server.hostname || "-"}</div>
