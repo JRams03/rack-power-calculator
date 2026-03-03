@@ -1537,41 +1537,37 @@ function renderRackDetail(rack, list) {
 function renderPduPanel(rack, list) {
 
   const type = getRackPduType(list);
+  const container = document.getElementById("powerSummary");
+  if (!container) return;
 
-  const rightPane = document.querySelector(".right-pane");
-  if (!rightPane) return;
+  container.innerHTML = "";
 
-  rightPane.innerHTML = "";
+  if (!type) return;
 
-  if (!type) {
-    rightPane.style.display = "none";
+  if (type === "eaton") {
+    renderPowerSummary(rack, list);
     return;
   }
 
-  rightPane.style.display = "block";
+  if (type === "apc") {
+    container.innerHTML = `
+      <div class="power-card">
+        <div class="power-title">APC Panel</div>
+        <div>APC panel not implemented yet.</div>
+      </div>
+    `;
+    return;
+  }
 
-if (type === "eaton") {
-  renderPowerSummary(rack, list);
-  return;
-}
-
-if (type === "apc") {
-  rightPane.innerHTML = `
-    <div class="power-card">
-      <div>APC panel not implemented yet.</div>
-    </div>
-  `;
-  return;
-}
-
-if (type === "server tech") {
-  rightPane.innerHTML = `
-    <div class="power-card">
-      <div>Servertech panel not implemented yet.</div>
-    </div>
-  `;
-  return;
-}
+  if (type === "servertech") {
+    container.innerHTML = `
+      <div class="power-card">
+        <div class="power-title">ServerTech Panel</div>
+        <div>ServerTech panel not implemented yet.</div>
+      </div>
+    `;
+    return;
+  }
 }
 
 
