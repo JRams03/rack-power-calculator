@@ -97,7 +97,7 @@ function handleCSV(e) {
         const obj = {};
 
         headers.forEach((header, index) => {
-          obj[header] = row[index] ?? "";
+          obj[header] = String(row[index] ?? "").trim();
         });
 
         return obj;
@@ -107,9 +107,9 @@ function handleCSV(e) {
         return !isNaN(total) && total !== 0;
       });
 
-console.log("HEADERS:", headers);
-console.log("RAW ROW COUNT:", rawData.length);
-console.log("FIRST RAW ROW:", rawData[0]);
+          console.log("HEADERS:", headers);
+          console.log("RAW ROW COUNT:", rawData.length);
+          console.log("FIRST RAW ROW:", rawData[0]);
 
       update();
     }
@@ -135,6 +135,10 @@ function update() {
 /* ================= RENDER ================= */
 
 function render() {
+
+    console.log("Rendering. Mode:", viewMode);
+    console.log("Filtered length:", filteredData.length);
+    
   if (viewMode === "flat") {
     renderFlat();
   } else {
