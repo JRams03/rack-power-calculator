@@ -76,16 +76,24 @@ function handleCSV(e) {
     skipEmptyLines: true,
     complete: result => {
 
-      const data = result.data.map(row => {
+      if (!result.data.length) return;
+
+      // Clean rows
+      const cleaned = result.data.map(row => {
         delete row._parsed_extra;
+
+        Object.keys(row).forEach(k => {
+          if (!k || k.trim() === "") delete row[k];
+        });
+
         return row;
       });
 
-      if (!data.length) return;
+      // Headers dynamisch
+      headers = Object.keys(cleaned[0]);
 
-      headers = Object.keys(data[0]);
-
-      rawData = data.filter(row => {
+      // Filter Total != 0
+      rawData = cleaned.filter(row => {
         const total = Number(row["Total"]);
         return !isNaN(total) && total !== 0;
       });
@@ -167,13 +175,17 @@ function renderGrouped() {
     return;
   }
 
-  const groups = {};
+const groups = {};
 
-  filteredData.forEach(row => {
-    const key = row["Part Type"] || "Unknown";
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(row);
-  });
+const partColumn = headers.find(h =>
+  h.toLowerCase().includes("part")
+);
+
+filteredData.forEach(row => {
+  const key = row[partColumn] || "Unknown";
+  if (!groups[key]) groups[key] = [];
+  groups[key].push(row);
+});
 
   container.innerHTML = Object.entries(groups)
     .map(([groupName, rows], index) => `
