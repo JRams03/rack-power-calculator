@@ -34,6 +34,8 @@ import { suggestBestPlacement } from "/rack-power-calculator/core/placementAdvis
 import { suggestBestSlot } from "/rack-power-calculator/core/slotAdvisor.js";
 import { RACK_CLASSIFICATION } 
 from "/rack-power-calculator/data/rack_classification.js";
+import { calculateSlot } 
+from "/rack-power-calculator/core/calculator.js";
 
 let selectedRackId = null;
 let currentRackServers = [];
