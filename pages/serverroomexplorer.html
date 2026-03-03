@@ -1550,20 +1550,30 @@ function renderPduPanel(rack, list) {
 
   rightPane.style.display = "block";
 
-  if (type === "eaton") {
-    renderPduPanel(rack, list);
-    return;
-  }
+if (type === "eaton") {
+  renderPowerSummary(rack, list);
+  return;
+}
 
-  if (type === "apc") {
-    renderApcPanel(rack, list); // later
-    return;
-  }
+if (type === "apc") {
+  rightPane.innerHTML = `
+    <div class="power-card">
+      <div class="power-title">APC Panel</div>
+      <div>APC panel not implemented yet.</div>
+    </div>
+  `;
+  return;
+}
 
-  if (type === "servertech") {
-    renderServerTechPanel(rack, list); // later
-    return;
-  }
+if (type === "Servertech") {
+  rightPane.innerHTML = `
+    <div class="power-card">
+      <div class="power-title">Servertech Panel</div>
+      <div>Servertech panel not implemented yet.</div>
+    </div>
+  `;
+  return;
+}
 }
 
 
