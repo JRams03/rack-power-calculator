@@ -56,10 +56,16 @@ function renderPage() {
 function attachEvents() {
   document.getElementById("csvInput").addEventListener("change", handleCSV);
   document.getElementById("globalSearch").addEventListener("input", update);
-  document.getElementById("viewToggle").addEventListener("change", e => {
-    viewMode = e.target.value;
-    render();
-  });
+document.getElementById("viewToggle").addEventListener("change", e => {
+  viewMode = e.target.value;
+  localStorage.setItem("inventory_view", viewMode);
+  render();
+});
+const storedView = localStorage.getItem("inventory_view");
+if (storedView) {
+  viewMode = storedView;
+  document.getElementById("viewToggle").value = storedView;
+}
   document.getElementById("resetBtn").addEventListener("click", resetAll);
 }
 
@@ -105,12 +111,12 @@ function handleCSV(e) {
           return !isNaN(total) && total !== 0;
         });
 
+        localStorage.setItem("inventory_headers", JSON.stringify(headers));
+        localStorage.setItem("inventory_data", JSON.stringify(rawData));
+
       update();
     }
   });
-
-localStorage.setItem("inventory_headers", JSON.stringify(headers));
-localStorage.setItem("inventory_data", JSON.stringify(rawData));
 
 }
 
