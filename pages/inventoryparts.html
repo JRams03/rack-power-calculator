@@ -1,69 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Inventory Parts</title>
+<meta charset="UTF-8">
+<title>Inventory Dashboard</title>
 
-  <link rel="stylesheet" href="../styles/base.css">
-  <link rel="stylesheet" href="../styles/inventoryparts.css">
+<link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="../styles/inventoryparts.css">
 
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
 <div id="content">
 
-  <h2>Inventory Parts</h2>
+<h2>Inventory Dashboard</h2>
 
-  <div class="control-bar">
-    <input type="file" id="csvInput" accept=".csv">
-    <input type="text" id="searchInput" placeholder="Search (multi-term supported)">
-    <button id="clearBtn">Clear</button>
-    <button id="exportBtn">Export Filtered</button>
-  </div>
+<div class="control-bar">
+  <input type="file" id="csvInput" accept=".csv">
+  <input type="text" id="searchInput" placeholder="Search...">
+  <select id="viewToggle">
+    <option value="grouped">Grouped View</option>
+    <option value="flat">Flat View</option>
+  </select>
+  <button id="resetBtn">Reset</button>
+</div>
 
-  <div id="filterBar" class="filter-bar"></div>
-  <div id="statsBar" class="stats-bar"></div>
-  <div id="tableContainer"></div>
+<div class="filter-bar">
+  <select id="locationFilter">
+    <option value="">All Locations</option>
+  </select>
+  <input type="number" id="minTotal" placeholder="Min Total">
+</div>
+
+<div id="dashboard" class="dashboard"></div>
+<div id="tableContainer"></div>
 
 </div>
 
 <script type="module">
 import { loadLayout } from "../app/layout.js";
 
-let inventoryData = [];
+/* =============================
+   STATE
+============================= */
+
+let rawData = [];
 let filteredData = [];
 
-let activeFilters = {};
+const columns = {
+  part: "Part Type",
+  location: "Location",
+  total: "Total"
+};
+
 let activeSearch = "";
-let activeSort = { column: null, direction: "asc" };
+let activeLocation = "";
+let activeMinTotal = null;
+let viewMode = "grouped";
+
+/* =============================
+   INIT
+============================= */
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("inventoryparts");
   initEvents();
-  document.body.classList.add("page-loaded");
 });
 
-/* =========================
+/* =============================
    EVENTS
-========================= */
+============================= */
 
 function initEvents() {
-  document.getElementById("csvInput").addEventListener("change", handleCSV);
 
-  document.getElementById("searchInput").addEventListener("input", e => {
-    activeSearch = e.target.value.trim();
-    applyAllFilters();
-  });
+  document.getElementById("csvInput")
+    .addEventListener("change", handleCSV);
 
-  document.getElementById("clearBtn").addEventListener("click", resetAll);
+  document.getElementById("searchInput")
+    .addEventListener("input", e => {
+      activeSearch = e.target.value.trim();
+      update();
+    });
 
-  document.getElementById("exportBtn").addEventListener("click", exportFiltered);
+  document.getElementById("locationFilter")
+    .addEventListener("change", e => {
+      activeLocation = e.target.value;
+      update();
+    });
+
+  document.getElementById("minTotal")
+    .addEventListener("input", e => {
+      activeMinTotal = Number(e.target.value) || null;
+      update();
+    });
+
+  document.getElementById("viewToggle")
+    .addEventListener("change", e => {
+      viewMode = e.target.value;
+      render();
+    });
+
+  document.getElementById("resetBtn")
+    .addEventListener("click", resetAll);
 }
 
-/* =========================
+/* =============================
    CSV LOAD
-========================= */
+============================= */
 
 function handleCSV(e) {
   const file = e.target.files[0];
@@ -72,228 +115,259 @@ function handleCSV(e) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-complete: result => {
+    complete: result => {
 
-  const rawData = result.data;
+      const data = result.data;
 
-  if (!rawData.length) return;
+      if (!data.length) return;
 
-  // Check of kolom bestaat (case insensitive)
-  const headers = Object.keys(rawData[0]);
-  const totalColumn = headers.find(h => h.toLowerCase() === "total");
+      if (!data[0][columns.total]) {
+        alert("Column 'Total' not found in CSV.");
+        return;
+      }
 
-  if (!totalColumn) {
-    console.warn("No 'Total' column found.");
-    inventoryData = rawData;
-  } else {
-    inventoryData = rawData.filter(row => {
-      const value = Number(row[totalColumn]);
-      return !isNaN(value) && value !== 0;
-    });
-  }
+      // Filter Total = 0 direct bij load
+      rawData = data.filter(row => {
+        const value = Number(row[columns.total]);
+        return !isNaN(value) && value !== 0;
+      });
 
-  generateColumnFilters(inventoryData);
-  applyAllFilters();
-}
-  });
-}
-
-/* =========================
-   FILTER ENGINE
-========================= */
-
-function applyAllFilters() {
-  let result = [...inventoryData];
-
-  // Column filters
-  Object.entries(activeFilters).forEach(([col, val]) => {
-    if (val) {
-      result = result.filter(row => row[col] === val);
+      populateLocationFilter();
+      update();
     }
   });
+}
 
-  // Search
-  result = applySearch(result);
+/* =============================
+   UPDATE STATE
+============================= */
 
-  // Sorting
-  if (activeSort.column) {
-    result.sort((a, b) => {
-      const valA = a[activeSort.column] || "";
-      const valB = b[activeSort.column] || "";
+function update() {
 
-      return activeSort.direction === "asc"
-        ? valA.localeCompare(valB, undefined, { numeric: true })
-        : valB.localeCompare(valA, undefined, { numeric: true });
-    });
+  filteredData = rawData.filter(row => {
+
+    if (activeLocation &&
+        row[columns.location] !== activeLocation)
+      return false;
+
+    if (activeMinTotal !== null &&
+        Number(row[columns.total]) < activeMinTotal)
+      return false;
+
+    if (activeSearch) {
+      const rowString = Object.values(row)
+        .join(" ")
+        .toLowerCase();
+
+      const terms = activeSearch
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean);
+
+      if (!terms.every(t => rowString.includes(t)))
+        return false;
+    }
+
+    return true;
+  });
+
+  renderDashboard();
+  render();
+}
+
+/* =============================
+   DASHBOARD
+============================= */
+
+function renderDashboard() {
+
+  const totalUnits = filteredData
+    .reduce((sum, r) =>
+      sum + Number(r[columns.total]), 0);
+
+  const uniqueParts = new Set(
+    filteredData.map(r => r[columns.part])
+  ).size;
+
+  const uniqueLocations = new Set(
+    filteredData.map(r => r[columns.location])
+  ).size;
+
+  const lowStock = filteredData
+    .filter(r => Number(r[columns.total]) < 5)
+    .length;
+
+  document.getElementById("dashboard").innerHTML = `
+    <div class="card">
+      <h3>Total Units</h3>
+      <p>${totalUnits}</p>
+    </div>
+    <div class="card">
+      <h3>Unique Parts</h3>
+      <p>${uniqueParts}</p>
+    </div>
+    <div class="card">
+      <h3>Locations</h3>
+      <p>${uniqueLocations}</p>
+    </div>
+    <div class="card">
+      <h3>Low Stock (&lt;5)</h3>
+      <p>${lowStock}</p>
+    </div>
+  `;
+}
+
+/* =============================
+   RENDER
+============================= */
+
+function render() {
+  if (viewMode === "flat") {
+    renderFlat();
+  } else {
+    renderGrouped();
   }
-
-  filteredData = result;
-
-  renderTable(filteredData);
-  renderStats(filteredData);
 }
 
-/* =========================
-   SEARCH (Multi-term AND)
-========================= */
+/* =============================
+   GROUPED VIEW
+============================= */
 
-function applySearch(data) {
-  if (!activeSearch) return data;
+function renderGrouped() {
 
-  const terms = activeSearch
-    .toLowerCase()
-    .split(" ")
-    .filter(Boolean);
+  const groups = {};
 
-  return data.filter(row => {
-    const rowString = Object.values(row).join(" ").toLowerCase();
-    return terms.every(term => rowString.includes(term));
+  filteredData.forEach(row => {
+    const part = row[columns.part];
+    if (!groups[part]) groups[part] = [];
+    groups[part].push(row);
   });
+
+  const html = Object.entries(groups)
+    .sort((a, b) =>
+      getGroupTotal(b[1]) - getGroupTotal(a[1])
+    )
+    .map(([part, rows]) => {
+
+      const total = getGroupTotal(rows);
+
+      return `
+        <div class="group">
+          <div class="group-header">
+            <span>${part}</span>
+            <span>Total: ${total}</span>
+          </div>
+          <div class="group-body">
+            ${rows.map(r => `
+              <div>
+                ${r[columns.location]} —
+                <span class="${
+                  Number(r[columns.total]) < 5
+                    ? "low-stock" : ""
+                }">
+                  ${r[columns.total]}
+                </span>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+  document.getElementById("tableContainer").innerHTML = html;
+
+  attachGroupToggle();
 }
 
-/* =========================
-   COLUMN FILTERS
-========================= */
+function getGroupTotal(rows) {
+  return rows.reduce((sum, r) =>
+    sum + Number(r[columns.total]), 0);
+}
 
-function generateColumnFilters(data) {
-  if (!data.length) return;
-
-  const headers = Object.keys(data[0]);
-  const filterBar = document.getElementById("filterBar");
-
-  filterBar.innerHTML = headers.map(header => {
-    const uniqueValues = [...new Set(
-      data.map(row => row[header]).filter(v => v && v.length < 50)
-    )];
-
-    if (uniqueValues.length > 50) return "";
-
-    return `
-      <select data-column="${header}" class="column-filter">
-        <option value="">All ${header}</option>
-        ${uniqueValues.sort().map(val => `
-          <option value="${val}">${val}</option>
-        `).join("")}
-      </select>
-    `;
-  }).join("");
-
-  document.querySelectorAll(".column-filter").forEach(select => {
-    select.addEventListener("change", e => {
-      const col = e.target.dataset.column;
-      activeFilters[col] = e.target.value;
-      applyAllFilters();
+function attachGroupToggle() {
+  document.querySelectorAll(".group-header")
+    .forEach(header => {
+      header.addEventListener("click", () => {
+        const body = header.nextElementSibling;
+        body.style.display =
+          body.style.display === "block"
+            ? "none"
+            : "block";
+      });
     });
-  });
 }
 
-/* =========================
-   TABLE
-========================= */
+/* =============================
+   FLAT VIEW
+============================= */
 
-function renderTable(data) {
-  const container = document.getElementById("tableContainer");
+function renderFlat() {
 
-  if (!data.length) {
-    container.innerHTML = "<p>No data available.</p>";
+  if (!filteredData.length) {
+    document.getElementById("tableContainer").innerHTML =
+      "<p>No data</p>";
     return;
   }
 
-  const headers = Object.keys(data[0]);
+  const headers = Object.keys(filteredData[0]);
 
   const headerRow = `
     <div class="table-row header">
+      ${headers.map(h =>
+        `<div>${h}</div>`).join("")}
+    </div>
+  `;
+
+  const rows = filteredData.map(r => `
+    <div class="table-row">
       ${headers.map(h => `
-        <div class="sortable" data-column="${h}">
-          ${h}
+        <div class="${
+          h === columns.total &&
+          Number(r[h]) < 5 ? "low-stock" : ""
+        }">
+          ${r[h]}
         </div>
       `).join("")}
     </div>
-  `;
-
-  const rows = data.map(row => `
-    <div class="table-row">
-      ${headers.map(h => `<div>${row[h] || ""}</div>`).join("")}
-    </div>
   `).join("");
 
-  container.innerHTML = `
-    <div class="table-grid">
+  document.getElementById("tableContainer").innerHTML =
+    `<div class="table-grid">
       ${headerRow}
       ${rows}
-    </div>
-  `;
-
-  attachSortEvents();
+    </div>`;
 }
 
-function attachSortEvents() {
-  document.querySelectorAll(".sortable").forEach(el => {
-    el.addEventListener("click", () => {
-      const col = el.dataset.column;
+/* =============================
+   HELPERS
+============================= */
 
-      if (activeSort.column === col) {
-        activeSort.direction =
-          activeSort.direction === "asc" ? "desc" : "asc";
-      } else {
-        activeSort.column = col;
-        activeSort.direction = "asc";
-      }
+function populateLocationFilter() {
+  const unique = [
+    ...new Set(rawData.map(r =>
+      r[columns.location]))
+  ].sort();
 
-      applyAllFilters();
-    });
-  });
+  document.getElementById("locationFilter").innerHTML =
+    `<option value="">All Locations</option>` +
+    unique.map(loc =>
+      `<option value="${loc}">${loc}</option>`
+    ).join("");
 }
-
-/* =========================
-   STATS
-========================= */
-
-function renderStats(data) {
-  document.getElementById("statsBar").innerHTML = `
-    <div class="stat-box">
-      Showing: <strong>${data.length}</strong>
-    </div>
-    <div class="stat-box">
-      Total Loaded: <strong>${inventoryData.length}</strong>
-    </div>
-  `;
-}
-
-/* =========================
-   RESET
-========================= */
 
 function resetAll() {
+
   activeSearch = "";
-  activeFilters = {};
-  activeSort = { column: null, direction: "asc" };
+  activeLocation = "";
+  activeMinTotal = null;
 
   document.getElementById("searchInput").value = "";
-  document.getElementById("filterBar").innerHTML = "";
+  document.getElementById("locationFilter").value = "";
+  document.getElementById("minTotal").value = "";
 
-  generateColumnFilters(inventoryData);
-  applyAllFilters();
-}
-
-/* =========================
-   EXPORT
-========================= */
-
-function exportFiltered() {
-  if (!filteredData.length) return;
-
-  const csv = Papa.unparse(filteredData);
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "filtered_inventory.csv";
-  a.click();
+  update();
 }
 
 </script>
-
 </body>
 </html>

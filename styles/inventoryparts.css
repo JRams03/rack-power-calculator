@@ -1,82 +1,115 @@
-/* Inventoryparts page content styling only */
+/* ===============================
+   LAYOUT
+=============================== */
 
-#content h2 {
-  margin-bottom: 20px;
-}
-
-.control-bar {
+.control-bar,
+.filter-bar {
   display: flex;
   gap: 12px;
-  margin: 20px 0 20px 0;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
 .control-bar input,
-.control-bar button {
+.control-bar select,
+.control-bar button,
+.filter-bar input,
+.filter-bar select {
   height: 36px;
   padding: 6px 12px;
   border-radius: 6px;
-  font-size: 13px;
-}
-
-/* Alleen input styling, geen globale borders overschrijven */
-.control-bar input {
   border: 1px solid #d1d5db;
 }
 
-.control-bar input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+/* ===============================
+   DASHBOARD CARDS
+=============================== */
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
-.control-bar button {
+.card {
   background: #111827;
-  color: white;
-  cursor: pointer;
-  border: none;
-  font-weight: 600;
-  transition: 0.15s ease;
+  color: #ffffff;
+  padding: 16px;
+  border-radius: 8px;
 }
 
-.control-bar button:hover {
-  background: #1f2937;
-  transform: translateY(-1px);
+.card h3 {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.7;
+  font-weight: 500;
 }
 
-/* Table */
+.card p {
+  margin: 6px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
 
-.table-grid {
-  display: flex;
-  flex-direction: column;
+/* ===============================
+   GROUPED VIEW
+=============================== */
+
+.group {
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  overflow: auto;
-  max-height: 70vh;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.group-header {
+  padding: 10px 14px;
+  background: #f3f4f6;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.group-header:hover {
+  background: #e5e7eb;
+}
+
+.group-body {
+  display: none;
+  padding: 10px 14px;
   background: #ffffff;
 }
 
-.table-row {
+/* ===============================
+   TABLE (FLAT VIEW)
+=============================== */
+
+.table-grid {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(160px, 1fr);
-  border-bottom: 1px solid #f1f1f1;
-  padding: 8px 10px;
-  font-size: 13px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
-.table-row.header {
+.table-row {
+  display: contents;
+}
+
+.table-row div {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header div {
   font-weight: 600;
   background: #f3f4f6;
-  position: sticky;
-  top: 0;
-  z-index: 2;
 }
 
-.table-row:nth-child(even):not(.header) {
-  background: #fafafa;
-}
+/* ===============================
+   LOW STOCK
+=============================== */
 
-.stat-box {
-  margin-bottom: 16px;
+.low-stock {
+  color: #dc2626;
   font-weight: 600;
 }
