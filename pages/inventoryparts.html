@@ -94,14 +94,16 @@ function handleCSV(e) {
       headers = Object.keys(cleaned[0]);
 
       // Filter Total != 0
-      rawData = cleaned.filter(row => {
-        const total = Number(row["Total"]);
-        return !isNaN(total) && total !== 0;
-      });
+rawData = cleaned.filter(row => {
+  const total = Number(String(row["Total"]).trim());
+  return !isNaN(total) && total !== 0;
+});
 
       update();
     }
   });
+  console.log("HEADERS:", headers);
+  console.log("FIRST ROW:", cleaned[0]);
 }
 
 /* ================= UPDATE ================= */
@@ -249,7 +251,7 @@ filteredData.forEach(row => {
 
 function sumTotal(rows) {
   return rows.reduce((sum, r) =>
-    sum + Number(r["Total"] || 0), 0);
+    sum + Number(String(r["Total"]).trim() || 0), 0);
 }
 
 /* ================= GROUP SEARCH ================= */
