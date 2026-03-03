@@ -235,21 +235,49 @@ function render() {
 
 function renderGrouped() {
 
+  if (!filteredData.length) {
+    document.getElementById("tableContainer").innerHTML =
+      "<p>No data</p>";
+    return;
+  }
+
+  const headers = Object.keys(filteredData[0]);
+
   const groups = {};
 
   filteredData.forEach(row => {
-    const part = row[columns.part];
-    if (!groups[part]) groups[part] = [];
-    groups[part].push(row);
+    const key = row[columns.part];
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(row);
   });
 
   const html = Object.entries(groups)
     .sort((a, b) =>
       getGroupTotal(b[1]) - getGroupTotal(a[1])
     )
-    .map(([part, rows]) => {
+    .map(([part, rows], index) => {
 
       const total = getGroupTotal(rows);
+      const groupId = `group-${index}`;
+
+      const tableHeader = `
+        <div class="table-row header">
+          ${headers.map(h => `<div>${h}</div>`).join("")}
+        </div>
+      `;
+
+      const tableRows = rows.map(r => `
+        <div class="table-row group-row" data-group="${groupId}">
+          ${headers.map(h => `
+            <div class="${
+              h === columns.total &&
+              Number(r[h]) < 5 ? "low-stock" : ""
+            }">
+              ${r[h]}
+            </div>
+          `).join("")}
+        </div>
+      `).join("");
 
       return `
         <div class="group">
@@ -258,17 +286,16 @@ function renderGrouped() {
             <span>Total: ${total}</span>
           </div>
           <div class="group-body">
-            ${rows.map(r => `
-              <div>
-                ${r[columns.location]} —
-                <span class="${
-                  Number(r[columns.total]) < 5
-                    ? "low-stock" : ""
-                }">
-                  ${r[columns.total]}
-                </span>
-              </div>
-            `).join("")}
+            <input 
+              type="text"
+              class="group-search"
+              data-group="${groupId}"
+              placeholder="Filter within group..."
+            />
+            <div class="table-grid">
+              ${tableHeader}
+              ${tableRows}
+            </div>
           </div>
         </div>
       `;
@@ -277,6 +304,38 @@ function renderGrouped() {
   document.getElementById("tableContainer").innerHTML = html;
 
   attachGroupToggle();
+  attachGroupSearch();
+}
+
+function attachGroupSearch() {
+
+  document.querySelectorAll(".group-search")
+    .forEach(input => {
+
+      input.addEventListener("input", e => {
+
+        const groupId = e.target.dataset.group;
+        const query = e.target.value
+          .toLowerCase()
+          .split(" ")
+          .filter(Boolean);
+
+        const rows = document.querySelectorAll(
+          `.group-row[data-group="${groupId}"]`
+        );
+
+        rows.forEach(row => {
+
+          const rowText = row.textContent.toLowerCase();
+
+          const match = query.every(term =>
+            rowText.includes(term)
+          );
+
+          row.style.display = match ? "" : "none";
+        });
+      });
+    });
 }
 
 function getGroupTotal(rows) {
