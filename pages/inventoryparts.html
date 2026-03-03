@@ -34,7 +34,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 function renderPage() {
   document.getElementById("content").innerHTML = `
-    <h2>Inventory Parts</h2>
+    
 
     <div class="control-bar">
       <input type="file" id="csvInput" accept=".csv">
@@ -204,7 +204,7 @@ function renderGrouped() {
           <span>Total: ${sumTotal(rows)}</span>
         </div>
 
-        <div class="group-body" id="group-${index}" style="display:block;">
+        <div class="group-body" id="group-${index}">
 
           <input 
             type="text"
@@ -263,10 +263,7 @@ function sumTotal(rows) {
 function attachGroupToggle() {
   document.querySelectorAll(".group-header").forEach(header => {
     header.addEventListener("click", () => {
-      const id = header.dataset.group;
-      const body = document.getElementById(`group-${id}`);
-      body.style.display =
-        body.style.display === "none" ? "block" : "none";
+      header.parentElement.classList.toggle("open");
     });
   });
 }

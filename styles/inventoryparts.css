@@ -39,9 +39,22 @@
 }
 
 .group-body {
-  display: none;
   padding: 14px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: 
+    max-height 0.35s ease,
+    opacity 0.25s ease;
 }
+
+.group.open .group-body {
+  max-height: 2000px; /* groot genoeg voor content */
+  opacity: 1;
+}
+
+
+
 
 .group-search {
   margin-bottom: 10px;
