@@ -107,6 +107,10 @@ function handleCSV(e) {
         return !isNaN(total) && total !== 0;
       });
 
+console.log("HEADERS:", headers);
+console.log("RAW ROW COUNT:", rawData.length);
+console.log("FIRST RAW ROW:", rawData[0]);
+
       update();
     }
   });
