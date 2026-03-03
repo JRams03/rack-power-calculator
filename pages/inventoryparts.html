@@ -72,11 +72,29 @@ function handleCSV(e) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    complete: result => {
-      inventoryData = result.data;
-      generateColumnFilters(inventoryData);
-      applyAllFilters();
-    }
+complete: result => {
+
+  const rawData = result.data;
+
+  if (!rawData.length) return;
+
+  // Check of kolom bestaat (case insensitive)
+  const headers = Object.keys(rawData[0]);
+  const totalColumn = headers.find(h => h.toLowerCase() === "total");
+
+  if (!totalColumn) {
+    console.warn("No 'Total' column found.");
+    inventoryData = rawData;
+  } else {
+    inventoryData = rawData.filter(row => {
+      const value = Number(row[totalColumn]);
+      return !isNaN(value) && value !== 0;
+    });
+  }
+
+  generateColumnFilters(inventoryData);
+  applyAllFilters();
+}
   });
 }
 
