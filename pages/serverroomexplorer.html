@@ -229,44 +229,55 @@ const STATUS_SHORT = {
 
 /* ========================= HELPERS ========================= */
 
-function showPduButton() {
+function showPduButton(list) {
 
   const container = document.getElementById("pduLaunchContainer");
   if (!container || !selectedRackId) return;
 
- container.innerHTML = `
-  <div class="pdu-launch-wrapper">
-    <button class="pdu-btn eaton" data-type="eaton">
-     View in Eaton
-    </button>
-    <button class="pdu-btn servertech" data-type="servertech">
-     View in ServerTech
-    </button>
-    <button class="pdu-btn apc" data-type="apc">
-     View in APC
-    </button>
-  </div>
-`;
+  const type = getRackPduType(list);
 
-  container.querySelectorAll(".pdu-btn").forEach(btn => {
-btn.onclick = () => {
+  container.innerHTML = "";
 
-  const type = btn.dataset.type;
+  if (!type) return;
 
-  const rackData = rackServers.filter(
-    s => s.rack === selectedRackId
-  );
+  const labelMap = {
+    eaton: "View in Eaton",
+    apc: "View in APC",
+    servertech: "View in ServerTech"
+  };
 
-sessionStorage.setItem(`${type}_selected_rack`, selectedRackId);
-sessionStorage.setItem(`${type}_selected_rack_data`,JSON.stringify(currentRackServers));
+  const pageMap = {
+    eaton: "eaton.html",
+    apc: "apc.html",
+    servertech: "servertech.html"
+  };
 
-      // doorsturen
-window.location.href =
-  `${type}.html?rack=${selectedRackId}`;
-    };
-  });
+  const btn = document.createElement("button");
+  btn.className = `pdu-btn ${type}`;
+  btn.textContent = labelMap[type] || "View PDU";
+
+  btn.onclick = () => {
+
+    const rackData = rackServers.filter(
+      s => s.rack === selectedRackId
+    );
+
+    sessionStorage.setItem(
+      `${type}_selected_rack`,
+      selectedRackId
+    );
+
+    sessionStorage.setItem(
+      `${type}_selected_rack_data`,
+      JSON.stringify(currentRackServers)
+    );
+
+    window.location.href =
+      `/rack-power-calculator/pages/${pageMap[type]}?rack=${selectedRackId}`;
+  };
+
+  container.appendChild(btn);
 }
-
 
 
  /**********************************************************************************************/
@@ -909,7 +920,7 @@ card.onclick = () => {
 
   renderRackDetail(rack, list);
   renderPduPanel(rack, list);
-  showPduButton();
+  showPduButton(list);
 
   requestAnimationFrame(() => {
     detail.classList.add("visible");
