@@ -1416,6 +1416,14 @@ function renderRackDetail(rack, list) {
 
     if (server) {
 
+        if ((server.hardwareFunction || "").toLowerCase().includes("power")) {
+            console.log("POWER DEVICE DEBUG:");
+            console.log("HardwareFunction:", server.hardwareFunction);
+            console.log("Manufacturer:", server.manufacturer);
+            console.log("Model:", server.model);
+            console.log(server);
+        }
+
       const isNumeric = !isNaN(slotKey);
       let uHeight = 1;
 
