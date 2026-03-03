@@ -11,11 +11,10 @@
 </head>
 <body>
 
-<div id="content">
-  <!-- Layout injecteert hier zijn content -->
-</div>
+<div id="content"></div>
 
 <script type="module">
+
 import { loadLayout } from "../app/layout.js";
 
 /* ================= STATE ================= */
@@ -29,17 +28,25 @@ let viewMode = "grouped";
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("inventoryparts");
-
-  setTimeout(() => {
-    renderPage();
-    attachEvents();
-  }, 0);
+  initPage();
 });
+
+function initPage() {
+  renderPage();
+  attachEvents();
+}
 
 /* ================= PAGE STRUCTURE ================= */
 
 function renderPage() {
-  document.getElementById("content").innerHTML = `
+  const content = document.getElementById("content");
+
+  if (!content) {
+    console.error("Layout failed to inject #content");
+    return;
+  }
+
+  content.innerHTML = `
     <h2>Inventory Parts</h2>
 
     <div class="control-bar">
@@ -59,17 +66,16 @@ function renderPage() {
 /* ================= EVENTS ================= */
 
 function attachEvents() {
-  document.getElementById("csvInput").addEventListener("change", handleCSV);
-  document.getElementById("globalSearch").addEventListener("input", update);
-  document.getElementById("viewToggle").addEventListener("change", e => {
+  document.getElementById("csvInput")?.addEventListener("change", handleCSV);
+  document.getElementById("globalSearch")?.addEventListener("input", update);
+  document.getElementById("viewToggle")?.addEventListener("change", e => {
     viewMode = e.target.value;
     render();
   });
-  document.getElementById("resetBtn").addEventListener("click", resetAll);
+  document.getElementById("resetBtn")?.addEventListener("click", resetAll);
 }
 
 /* ================= CSV LOAD ================= */
-
 
 function handleCSV(e) {
   const file = e.target.files[0];
@@ -80,22 +86,37 @@ function handleCSV(e) {
     skipEmptyLines: true,
     complete: result => {
 
-      const data = result.data.map(row => {
-        delete row._parsed_extra;
-        return row;
-      });
+      const data = result.data
+        .map(row => {
+          delete row._parsed_extra;
+          return row;
+        })
+        .filter(row =>
+          Object.values(row).some(v => v !== "")
+        );
 
-      headers = Object.keys(data[0] || {});
+      if (!data.length) {
+        console.warn("CSV contains no usable data");
+        return;
+      }
 
-      rawData = data.filter(row => {
-        const total = Number(row["Total"]);
-        return !isNaN(total) && total !== 0;
-      });
+      headers = Object.keys(data[0]);
 
-      update();
+      const totalColumn = headers.find(h =>
+        h.trim().toLowerCase() === "total"
+      );
+
+      rawData = totalColumn
+        ? data.filter(row => Number(row[totalColumn]) !== 0)
+        : data;
+
+      filteredData = rawData;
+
+      render();
     }
   });
 }
+
 /* ================= UPDATE ================= */
 
 function update() {
@@ -115,26 +136,28 @@ function update() {
 /* ================= RENDER ================= */
 
 function render() {
-
-    console.log("Rendering. Mode:", viewMode);
-    console.log("Filtered length:", filteredData.length);
-
-  if (viewMode === "flat") {
-    renderFlat();
-  } else {
-    renderGrouped();
-  }
-}
-
-/* ================= FLAT VIEW ================= */
-
-function renderFlat() {
   const container = document.getElementById("tableContainer");
+  if (!container) return;
 
   if (!filteredData.length) {
     container.innerHTML = "<p>No data</p>";
     return;
   }
+
+  if (viewMode === "flat") {
+    renderFlat(container);
+  } else {
+    renderGrouped(container);
+  }
+}
+
+/* ================= FLAT VIEW ================= */
+
+function renderFlat(container) {
+
+  const totalColumn = headers.find(h =>
+    h.trim().toLowerCase() === "total"
+  );
 
   container.innerHTML = `
     <div class="table-wrapper">
@@ -149,9 +172,11 @@ function renderFlat() {
             <tr>
               ${headers.map(h => `
                 <td class="${
-                  h === "Total" && Number(row[h]) < 5 ? "low-stock" : ""
+                  h === totalColumn && Number(row[h]) < 5
+                    ? "low-stock"
+                    : ""
                 }">
-                  ${row[h] || ""}
+                  ${row[h] ?? ""}
                 </td>
               `).join("")}
             </tr>
@@ -164,19 +189,17 @@ function renderFlat() {
 
 /* ================= GROUPED VIEW ================= */
 
-function renderGrouped() {
-  const container = document.getElementById("tableContainer");
+function renderGrouped(container) {
 
-  if (!filteredData.length) {
-    container.innerHTML = "<p>No data</p>";
-    return;
-  }
+  const totalColumn = headers.find(h =>
+    h.trim().toLowerCase() === "total"
+  );
+
+  const partColumn =
+    headers.find(h => h.toLowerCase().includes("part")) ||
+    headers[0];
 
   const groups = {};
-
-  const partColumn = headers.find(h =>
-    h.toLowerCase().includes("part")
-  );
 
   filteredData.forEach(row => {
     const key = row[partColumn] || "Unknown";
@@ -187,21 +210,12 @@ function renderGrouped() {
   container.innerHTML = Object.entries(groups)
     .map(([groupName, rows], index) => `
       <div class="group">
-
-        <div class="group-header" data-group="${index}">
+        <div class="group-header" data-id="${index}">
           <span>${groupName}</span>
-          <span>Total: ${sumTotal(rows)}</span>
+          <span>Total: ${sumTotal(rows, totalColumn)}</span>
         </div>
 
         <div class="group-body" id="group-${index}" style="display:block;">
-
-          <input 
-            type="text"
-            class="group-search"
-            data-group="${index}"
-            placeholder="Filter within group..."
-          />
-
           <div class="table-wrapper">
             <table>
               <thead>
@@ -211,12 +225,14 @@ function renderGrouped() {
               </thead>
               <tbody>
                 ${rows.map(row => `
-                  <tr data-group="${index}">
+                  <tr>
                     ${headers.map(h => `
                       <td class="${
-                        h === "Total" && Number(row[h]) < 5 ? "low-stock" : ""
+                        h === totalColumn && Number(row[h]) < 5
+                          ? "low-stock"
+                          : ""
                       }">
-                        ${row[h] || ""}
+                        ${row[h] ?? ""}
                       </td>
                     `).join("")}
                   </tr>
@@ -224,45 +240,26 @@ function renderGrouped() {
               </tbody>
             </table>
           </div>
-
         </div>
-
       </div>
     `).join("");
 
   attachGroupToggle();
-  attachGroupSearch();
 }
 
-function sumTotal(rows) {
+function sumTotal(rows, totalColumn) {
+  if (!totalColumn) return rows.length;
+
   return rows.reduce((sum, r) =>
-    sum + Number(String(r["Total"]).trim() || 0), 0);
+    sum + Number(r[totalColumn] || 0), 0);
 }
 
-/* ================= GROUP SEARCH ================= */
-
-function attachGroupSearch() {
-  document.querySelectorAll(".group-search").forEach(input => {
-    input.addEventListener("input", e => {
-      const groupId = e.target.dataset.group;
-      const terms = e.target.value.toLowerCase().split(" ").filter(Boolean);
-
-      document.querySelectorAll(`tr[data-group="${groupId}"]`)
-        .forEach(row => {
-          const text = row.textContent.toLowerCase();
-          const match = terms.every(t => text.includes(t));
-          row.style.display = match ? "" : "none";
-        });
-    });
-  });
-}
-
-/* ================= TOGGLE ================= */
+/* ================= GROUP TOGGLE ================= */
 
 function attachGroupToggle() {
   document.querySelectorAll(".group-header").forEach(header => {
     header.addEventListener("click", () => {
-      const id = header.dataset.group;
+      const id = header.dataset.id;
       const body = document.getElementById(`group-${id}`);
       body.style.display =
         body.style.display === "block" ? "none" : "block";
