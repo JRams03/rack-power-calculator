@@ -1203,12 +1203,8 @@ function renderRooms() {
   }
 
   // Powerstrip
-  if (
-    func.includes("power") ||
-    func.includes("pdu") ||
-    func.includes("strip")
-  ) {
-    return device.manufacturer || "-";
+  if (func.includes("powerstrip")) {
+    return device.manufacturer || device.motherboard || "-";
   }
 
   // Default (servers etc)
