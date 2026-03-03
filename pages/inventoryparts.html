@@ -75,35 +75,39 @@ function handleCSV(e) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
+    delimiter: "", // auto detect
+    dynamicTyping: false,
     complete: result => {
 
-      if (!result.data.length) return;
+      console.log("PARSE RESULT:", result);
 
-      // Clean rows
+      if (!result.data || !result.data.length) {
+        console.error("CSV parsed but no rows detected.");
+        return;
+      }
+
       const cleaned = result.data.map(row => {
-        delete row._parsed_extra;
+        const newRow = {};
 
         Object.keys(row).forEach(k => {
-          if (!k || k.trim() === "") delete row[k];
+          if (!k) return;
+          const cleanKey = k.trim();
+          newRow[cleanKey] = row[k];
         });
 
-        return row;
+        return newRow;
       });
 
-      // Headers dynamisch
       headers = Object.keys(cleaned[0]);
 
-      // Filter Total != 0
-rawData = cleaned.filter(row => {
-  const total = Number(String(row["Total"]).trim());
-  return !isNaN(total) && total !== 0;
-});
+      rawData = cleaned.filter(row => {
+        const total = Number(String(row["Total"] || "").trim());
+        return !isNaN(total) && total !== 0;
+      });
 
       update();
     }
   });
-  console.log("HEADERS:", headers);
-  console.log("FIRST ROW:", cleaned[0]);
 }
 
 /* ================= UPDATE ================= */
