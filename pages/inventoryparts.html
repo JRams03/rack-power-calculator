@@ -152,11 +152,14 @@ function render() {
 /* ================= FLAT VIEW ================= */
 
 function renderFlat() {
+    console.log("HEADERS IN RENDER:", headers);
+    console.log("FILTERED IN RENDER:", filteredData.length);
     console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
     container.innerHTML = "<p>No data</p>";
+    console.log("HTML LENGTH:", container.innerHTML.length);
     return;
   }
 
@@ -190,11 +193,14 @@ function renderFlat() {
 /* ================= GROUPED VIEW ================= */
 
 function renderGrouped() {
+    console.log("HEADERS IN RENDER:", headers);
+    console.log("FILTERED IN RENDER:", filteredData.length);
     console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
     container.innerHTML = "<p>No data</p>";
+    console.log("HTML LENGTH:", container.innerHTML.length);
     return;
   }
 
