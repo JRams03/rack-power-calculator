@@ -1552,21 +1552,17 @@ function renderPduPanel(rack, list) {
   }
 
   if (type === "apc") {
-    container.innerHTML = `
-      <div class="power-card">
-        <div class="power-title">APC Panel</div>
-        <div>APC panel not implemented yet.</div>
-      </div>
-    `;
+    renderAPCPanel(rack, list);
     return;
   }
-
-if (type === "servertech") {
-  renderServerTechPanel(rack, list);
-  return;
-}
-}
-
+  
+  if (type === "servertech") {
+    renderServerTechPanel(rack, list);
+    return;
+  }
+  
+  }
+  
 
 function renderEatonPanel(rack, list) {
 console.log(
@@ -1680,6 +1676,70 @@ container.innerHTML = `
           const bankNumber = (i % 2) + 1;   // 🔥 1,2,1,2,1,2
           return renderUsageBar(`Bank ${bankNumber}`, b, BANK_LIMIT);
         }).join("")}
+      </div>
+
+    </div>
+  `;
+}
+
+function renderAPCPanel(rack, list) {
+
+  const BANK_LIMIT = 8;     // 16A / bank
+  const PHASE_LIMIT = 16;   // 32A totaal
+
+  let bankTop = 0;
+  let bankBottom = 0;
+  let phase = 0;
+
+  list
+    .filter(s => !isNaN(Number(s.slot)))
+    .forEach(s => {
+
+      const slot = Number(s.slot);
+      const profile = findServerProfile(s.motherboard);
+      if (!profile) return;
+
+      // 🔥 Gebruik dezelfde berekening als Eaton summary
+      const calc = calculateSlot(profile, "normal");
+      if (!calc) return;
+
+      const amps = calc.ampsPerFeed * Math.ceil(profile.psuCount / 2);
+
+      if (slot >= 1 && slot <= 16) {
+        bankTop += amps;
+      } else if (slot >= 17 && slot <= 44) {
+        bankBottom += amps;
+      }
+
+      phase += amps;
+    });
+
+  const container = document.getElementById("powerSummary");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="power-panel">
+
+      <div class="power-header">
+        ${formatRackDisplay(rack)}
+      </div>
+
+      <div class="power-total">
+        <div class="power-total-label">Total Load</div>
+        <div class="power-total-value">
+          ${phase.toFixed(2)}A / ${PHASE_LIMIT}A
+        </div>
+      </div>
+
+      <div class="power-section">
+        <div class="power-section-title">Bank Usage</div>
+        ${renderUsageBar("Top", bankTop, BANK_LIMIT)}
+        ${renderUsageBar("Bottom", bankBottom, BANK_LIMIT)}
+      </div>
+
+      <div class="power-section">
+        <div class="power-section-title">Phase Usage</div>
+        ${renderUsageBar("L1", phase, PHASE_LIMIT)}
       </div>
 
     </div>
