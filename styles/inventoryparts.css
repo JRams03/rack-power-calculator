@@ -57,8 +57,9 @@
 
 table {
   border-collapse: collapse;
-  min-width: max-content;
-  width: 100%;
+  table-layout: auto;   /* belangrijk */
+  width: max-content;   /* niet 100% */
+  min-width: 100%;
   font-size: 13px;
 }
 
@@ -71,10 +72,5 @@ th, td {
 
 th {
   background: #f3f4f6;
-  font-weight: 600;
-}
-
-.low-stock {
-  color: #dc2626;
   font-weight: 600;
 }
