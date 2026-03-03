@@ -1547,7 +1547,7 @@ function renderPduPanel(rack, list) {
   if (!type) return;
 
   if (type === "eaton") {
-    renderPowerSummary(rack, list);
+    renderEatonPanel(rack, list);
     return;
   }
 
@@ -1561,19 +1561,14 @@ function renderPduPanel(rack, list) {
     return;
   }
 
-  if (type === "servertech") {
-    container.innerHTML = `
-      <div class="power-card">
-        <div class="power-title">ServerTech Panel</div>
-        <div>ServerTech panel not implemented yet.</div>
-      </div>
-    `;
-    return;
-  }
+if (type === "servertech") {
+  renderServerTechPanel(rack, list);
+  return;
+}
 }
 
 
-function renderPowerSummary(rack, list) {
+function renderEatonPanel(rack, list) {
 console.log(
   "POWER slots:",
   list
@@ -1640,6 +1635,56 @@ container.innerHTML = `
   </div>
 `;
   }
+
+  function renderServerTechPanel(rack, list) {
+
+  const rackInput = list
+    .filter(s => !isNaN(Number(s.slot)))
+    .map(s => ({
+      slot: Number(s.slot),
+      serverProfile: findServerProfile(s.motherboard),
+      utilization: "normal"
+    }));
+
+  const result = calculateRack(rackInput);
+
+  const banks = result.banks;
+  const phases = result.phases;
+  const totalAmp = result.totalAmp;
+
+  const container = document.getElementById("powerSummary");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="power-panel">
+
+      <div class="power-header">
+        ${formatRackDisplay(rack)}
+      </div>
+
+      <div class="power-total">
+        <div class="power-total-label">Total Design Load</div>
+        <div class="power-total-value">
+          ${totalAmp.toFixed(2)} A / 48A
+        </div>
+      </div>
+
+      <div class="power-section">
+        <div class="power-section-title">Phase Usage</div>
+        ${phases.map((p,i)=> renderUsageBar(`L${i+1}`, p, PHASE_LIMIT)).join("")}
+      </div>
+
+      <div class="power-section">
+        <div class="power-section-title">Bank Usage</div>
+        ${banks.map((b,i)=> {
+          const bankNumber = (i % 2) + 1;   // 🔥 1,2,1,2,1,2
+          return renderUsageBar(`Bank ${bankNumber}`, b, BANK_LIMIT);
+        }).join("")}
+      </div>
+
+    </div>
+  `;
+}
 
   function renderUsageBar(label, value, limit) {
 
