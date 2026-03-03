@@ -29,8 +29,11 @@ let viewMode = "grouped";
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("inventoryparts");
-  renderPage();
-  attachEvents();
+
+  setTimeout(() => {
+    renderPage();
+    attachEvents();
+  }, 0);
 });
 
 /* ================= PAGE STRUCTURE ================= */
@@ -138,7 +141,7 @@ function render() {
 
     console.log("Rendering. Mode:", viewMode);
     console.log("Filtered length:", filteredData.length);
-    
+
   if (viewMode === "flat") {
     renderFlat();
   } else {
@@ -149,6 +152,7 @@ function render() {
 /* ================= FLAT VIEW ================= */
 
 function renderFlat() {
+    console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
@@ -186,6 +190,7 @@ function renderFlat() {
 /* ================= GROUPED VIEW ================= */
 
 function renderGrouped() {
+    console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
