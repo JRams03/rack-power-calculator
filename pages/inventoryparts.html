@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Inventory Dashboard</title>
+<title>Inventory Parts</title>
 
 <link rel="stylesheet" href="../styles/base.css">
 <link rel="stylesheet" href="../styles/inventoryparts.css">
@@ -13,11 +13,11 @@
 
 <div id="content">
 
-<h2>Inventory Dashboard</h2>
+<h2>Inventory Parts</h2>
 
 <div class="control-bar">
   <input type="file" id="csvInput" accept=".csv">
-  <input type="text" id="searchInput" placeholder="Search...">
+  <input type="text" id="globalSearch" placeholder="Search...">
   <select id="viewToggle">
     <option value="grouped">Grouped View</option>
     <option value="flat">Flat View</option>
@@ -25,88 +25,29 @@
   <button id="resetBtn">Reset</button>
 </div>
 
-<div class="filter-bar">
-  <select id="locationFilter">
-    <option value="">All Locations</option>
-  </select>
-  <input type="number" id="minTotal" placeholder="Min Total">
-</div>
-
-<div id="dashboard" class="dashboard"></div>
 <div id="tableContainer"></div>
 
 </div>
 
-<script type="module">
-import { loadLayout } from "../app/layout.js";
-
-/* =============================
-   STATE
-============================= */
-
+<script>
 let rawData = [];
 let filteredData = [];
-
-const columns = {
-  part: "Part Type",
-  location: "Location",
-  total: "Total"
-};
-
-let activeSearch = "";
-let activeLocation = "";
-let activeMinTotal = null;
+let headers = [];
 let viewMode = "grouped";
 
-/* =============================
-   INIT
-============================= */
+/* ================= INIT ================= */
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadLayout("inventoryparts");
-  initEvents();
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("csvInput").addEventListener("change", handleCSV);
+  document.getElementById("globalSearch").addEventListener("input", update);
+  document.getElementById("viewToggle").addEventListener("change", e => {
+    viewMode = e.target.value;
+    render();
+  });
+  document.getElementById("resetBtn").addEventListener("click", resetAll);
 });
 
-/* =============================
-   EVENTS
-============================= */
-
-function initEvents() {
-
-  document.getElementById("csvInput")
-    .addEventListener("change", handleCSV);
-
-  document.getElementById("searchInput")
-    .addEventListener("input", e => {
-      activeSearch = e.target.value.trim();
-      update();
-    });
-
-  document.getElementById("locationFilter")
-    .addEventListener("change", e => {
-      activeLocation = e.target.value;
-      update();
-    });
-
-  document.getElementById("minTotal")
-    .addEventListener("input", e => {
-      activeMinTotal = Number(e.target.value) || null;
-      update();
-    });
-
-  document.getElementById("viewToggle")
-    .addEventListener("change", e => {
-      viewMode = e.target.value;
-      render();
-    });
-
-  document.getElementById("resetBtn")
-    .addEventListener("click", resetAll);
-}
-
-/* =============================
-   CSV LOAD
-============================= */
+/* ================= CSV LOAD ================= */
 
 function handleCSV(e) {
   const file = e.target.files[0];
@@ -117,109 +58,40 @@ function handleCSV(e) {
     skipEmptyLines: true,
     complete: result => {
 
-      const data = result.data;
-
-      if (!data.length) return;
-
-      if (!data[0][columns.total]) {
-        alert("Column 'Total' not found in CSV.");
-        return;
-      }
-
-      // Filter Total = 0 direct bij load
-      rawData = data.filter(row => {
-        const value = Number(row[columns.total]);
-        return !isNaN(value) && value !== 0;
+      const data = result.data.map(row => {
+        delete row._parsed_extra;
+        return row;
       });
 
-      populateLocationFilter();
+      headers = Object.keys(data[0] || {});
+
+      rawData = data.filter(row => {
+        const total = Number(row["Total"]);
+        return !isNaN(total) && total !== 0;
+      });
+
       update();
     }
   });
 }
 
-/* =============================
-   UPDATE STATE
-============================= */
+/* ================= UPDATE ================= */
 
 function update() {
+  const search = document.getElementById("globalSearch").value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean);
 
   filteredData = rawData.filter(row => {
-
-    if (activeLocation &&
-        row[columns.location] !== activeLocation)
-      return false;
-
-    if (activeMinTotal !== null &&
-        Number(row[columns.total]) < activeMinTotal)
-      return false;
-
-    if (activeSearch) {
-      const rowString = Object.values(row)
-        .join(" ")
-        .toLowerCase();
-
-      const terms = activeSearch
-        .toLowerCase()
-        .split(" ")
-        .filter(Boolean);
-
-      if (!terms.every(t => rowString.includes(t)))
-        return false;
-    }
-
-    return true;
+    const rowText = Object.values(row).join(" ").toLowerCase();
+    return search.every(term => rowText.includes(term));
   });
 
-  renderDashboard();
   render();
 }
 
-/* =============================
-   DASHBOARD
-============================= */
-
-function renderDashboard() {
-
-  const totalUnits = filteredData
-    .reduce((sum, r) =>
-      sum + Number(r[columns.total]), 0);
-
-  const uniqueParts = new Set(
-    filteredData.map(r => r[columns.part])
-  ).size;
-
-  const uniqueLocations = new Set(
-    filteredData.map(r => r[columns.location])
-  ).size;
-
-  const lowStock = filteredData
-    .filter(r => Number(r[columns.total]) < 5)
-    .length;
-
-  document.getElementById("dashboard").innerHTML = `
-    <div class="card">
-      <h3>Total Units</h3>
-      <p>${totalUnits}</p>
-    </div>
-    <div class="card">
-      <h3>Unique Parts</h3>
-      <p>${uniqueParts}</p>
-    </div>
-    <div class="card">
-      <h3>Locations</h3>
-      <p>${uniqueLocations}</p>
-    </div>
-    <div class="card">
-      <h3>Low Stock (&lt;5)</h3>
-      <p>${lowStock}</p>
-    </div>
-  `;
-}
-
-/* =============================
-   RENDER
-============================= */
+/* ================= RENDER ================= */
 
 function render() {
   if (viewMode === "flat") {
@@ -229,229 +101,150 @@ function render() {
   }
 }
 
-/* =============================
-   GROUPED VIEW
-============================= */
+/* ================= FLAT VIEW ================= */
 
-function renderGrouped() {
-
+function renderFlat() {
   if (!filteredData.length) {
-    document.getElementById("tableContainer").innerHTML =
-      "<p>No data</p>";
+    tableContainer.innerHTML = "<p>No data</p>";
     return;
   }
 
-  const headers = Object.keys(filteredData[0]);
+  tableContainer.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            ${headers.map(h => `<th>${h}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredData.map(row => `
+            <tr>
+              ${headers.map(h => `
+                <td class="${
+                  h === "Total" && Number(row[h]) < 5 ? "low-stock" : ""
+                }">
+                  ${row[h] || ""}
+                </td>
+              `).join("")}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ================= GROUPED VIEW ================= */
+
+function renderGrouped() {
+  if (!filteredData.length) {
+    tableContainer.innerHTML = "<p>No data</p>";
+    return;
+  }
 
   const groups = {};
 
   filteredData.forEach(row => {
-    const key = row[columns.part];
+    const key = row["Part Type"] || "Unknown";
     if (!groups[key]) groups[key] = [];
     groups[key].push(row);
   });
 
-  const html = Object.entries(groups)
-    .sort((a, b) =>
-      getGroupTotal(b[1]) - getGroupTotal(a[1])
-    )
-    .map(([part, rows], index) => {
+  tableContainer.innerHTML = Object.entries(groups)
+    .map(([groupName, rows], index) => `
+      <div class="group">
 
-      const total = getGroupTotal(rows);
-      const groupId = `group-${index}`;
+        <div class="group-header" data-group="${index}">
+          <span>${groupName}</span>
+          <span>Total: ${sumTotal(rows)}</span>
+        </div>
 
-      return `
-        <div class="group">
+        <div class="group-body" id="group-${index}">
 
-          <div class="group-header">
-            <span>${part}</span>
-            <span>Total: ${total}</span>
-          </div>
+          <input 
+            type="text"
+            class="group-search"
+            data-group="${index}"
+            placeholder="Filter within group..."
+          />
 
-          <div class="group-body">
-
-            <input 
-              type="text"
-              class="group-search"
-              data-group="${groupId}"
-              placeholder="Filter within group..."
-            />
-
-            <div class="table-grid">
-
-              <div class="table-row header">
-                ${headers.map(h =>
-                  `<div>${shortHeader(h)}</div>`
-                ).join("")}
-              </div>
-
-              ${rows.map(r => `
-                <div class="table-row group-row"
-                     data-group="${groupId}">
-                  ${headers.map(h => `
-                    <div class="${
-                      h === columns.total &&
-                      Number(r[h]) < 5
-                        ? "low-stock"
-                        : ""
-                    }">
-                      ${r[h]}
-                    </div>
-                  `).join("")}
-                </div>
-              `).join("")}
-
-            </div>
-
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  ${headers.map(h => `<th>${h}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.map(row => `
+                  <tr data-group="${index}">
+                    ${headers.map(h => `
+                      <td class="${
+                        h === "Total" && Number(row[h]) < 5 ? "low-stock" : ""
+                      }">
+                        ${row[h] || ""}
+                      </td>
+                    `).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
           </div>
 
         </div>
-      `;
-    }).join("");
 
-  document.getElementById("tableContainer").innerHTML = html;
+      </div>
+    `).join("");
 
   attachGroupToggle();
   attachGroupSearch();
 }
 
+function sumTotal(rows) {
+  return rows.reduce((sum, r) =>
+    sum + Number(r["Total"] || 0), 0);
+}
+
+/* ================= GROUP SEARCH ================= */
+
 function attachGroupSearch() {
+  document.querySelectorAll(".group-search").forEach(input => {
+    input.addEventListener("input", e => {
+      const groupId = e.target.dataset.group;
+      const terms = e.target.value.toLowerCase().split(" ").filter(Boolean);
 
-  document.querySelectorAll(".group-search")
-    .forEach(input => {
-
-      input.addEventListener("input", e => {
-
-        const groupId = e.target.dataset.group;
-
-        const terms = e.target.value
-          .toLowerCase()
-          .split(" ")
-          .filter(Boolean);
-
-        const rows = document.querySelectorAll(
-          `.group-row[data-group="${groupId}"]`
-        );
-
-        rows.forEach(row => {
-
+      document.querySelectorAll(`tr[data-group="${groupId}"]`)
+        .forEach(row => {
           const text = row.textContent.toLowerCase();
-
-          const match = terms.every(term =>
-            text.includes(term)
-          );
-
+          const match = terms.every(t => text.includes(t));
           row.style.display = match ? "" : "none";
         });
-
-      });
     });
+  });
 }
 
-function getGroupTotal(rows) {
-  return rows.reduce((sum, r) =>
-    sum + Number(r[columns.total]), 0);
-}
+/* ================= TOGGLE ================= */
 
 function attachGroupToggle() {
-  document.querySelectorAll(".group-header")
-    .forEach(header => {
-      header.addEventListener("click", () => {
-        const body = header.nextElementSibling;
-        body.style.display =
-          body.style.display === "block"
-            ? "none"
-            : "block";
-      });
+  document.querySelectorAll(".group-header").forEach(header => {
+    header.addEventListener("click", () => {
+      const id = header.dataset.group;
+      const body = document.getElementById(`group-${id}`);
+      body.style.display =
+        body.style.display === "block" ? "none" : "block";
     });
+  });
 }
 
-/* =============================
-   FLAT VIEW
-============================= */
-
-function renderFlat() {
-
-  if (!filteredData.length) {
-    document.getElementById("tableContainer").innerHTML =
-      "<p>No data</p>";
-    return;
-  }
-
-  const headers = Object.keys(filteredData[0]);
-
-  const headerRow = `
-    <div class="table-row header">
-      ${headers.map(h =>
-        `<div>${h}</div>`).join("")}
-    </div>
-  `;
-
-  const rows = filteredData.map(r => `
-    <div class="table-row">
-      ${headers.map(h => `
-        <div class="${
-          h === columns.total &&
-          Number(r[h]) < 5 ? "low-stock" : ""
-        }">
-          ${r[h]}
-        </div>
-      `).join("")}
-    </div>
-  `).join("");
-
-  document.getElementById("tableContainer").innerHTML =
-    `<div class="table-grid">
-      ${headerRow}
-      ${rows}
-    </div>`;
-}
-
-/* =============================
-   HELPERS
-============================= */
-
-function shortHeader(name) {
-
-  const map = {
-    "CHECK_OUT": "CO",
-    "HARD_FAIL": "HF",
-    "INVENTORY": "INV",
-    "PLANNED": "PL",
-    "QUARANTINE": "QT",
-    "RESERVED": "RES",
-    "SPARE": "SP"
-  };
-
-  return map[name] || name;
-}
-
-function populateLocationFilter() {
-  const unique = [
-    ...new Set(rawData.map(r =>
-      r[columns.location]))
-  ].sort();
-
-  document.getElementById("locationFilter").innerHTML =
-    `<option value="">All Locations</option>` +
-    unique.map(loc =>
-      `<option value="${loc}">${loc}</option>`
-    ).join("");
-}
+/* ================= RESET ================= */
 
 function resetAll() {
-
-  activeSearch = "";
-  activeLocation = "";
-  activeMinTotal = null;
-
-  document.getElementById("searchInput").value = "";
-  document.getElementById("locationFilter").value = "";
-  document.getElementById("minTotal").value = "";
-
-  update();
+  document.getElementById("globalSearch").value = "";
+  filteredData = rawData;
+  render();
 }
-
 </script>
+
 </body>
 </html>

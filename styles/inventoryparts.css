@@ -1,184 +1,80 @@
-/* =====================================================
-   BASE LAYOUT
-===================================================== */
-
 #content {
   padding: 20px;
 }
 
-.control-bar,
-.filter-bar {
+.control-bar {
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
 }
 
 .control-bar input,
 .control-bar select,
-.control-bar button,
-.filter-bar input,
-.filter-bar select {
+.control-bar button {
   height: 36px;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  font-size: 14px;
+  border: 1px solid #ccc;
 }
 
 .control-bar button {
   cursor: pointer;
-  background: #111827;
-  color: #ffffff;
-  border: none;
 }
-
-.control-bar button:hover {
-  background: #1f2937;
-}
-
-/* =====================================================
-   GROUP WRAPPER
-===================================================== */
 
 .group {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #ddd;
   border-radius: 8px;
-  margin-bottom: 16px;
-  overflow: hidden;
-  background: #ffffff;
+  margin-bottom: 20px;
+  background: #fff;
 }
 
 .group-header {
   padding: 10px 14px;
   background: #f3f4f6;
-  cursor: pointer;
+  font-weight: 600;
   display: flex;
   justify-content: space-between;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.group-header:hover {
-  background: #e5e7eb;
+  cursor: pointer;
 }
 
 .group-body {
   display: none;
   padding: 14px;
-  background: #ffffff;
 }
-
-/* =====================================================
-   GROUP SEARCH
-===================================================== */
 
 .group-search {
-  width: 250px;
   margin-bottom: 10px;
-  height: 32px;
-  padding: 4px 10px;
+  padding: 6px 10px;
+  width: 250px;
   border-radius: 6px;
-  border: 1px solid #d1d5db;
-  font-size: 13px;
+  border: 1px solid #ccc;
 }
 
-/* =====================================================
-   TABLE GRID (SHARED BY FLAT + GROUPED)
-===================================================== */
+.table-wrapper {
+  overflow-x: auto;
+}
 
-/*
-  Column order assumed:
-  Part Type
-  Description
-  Model
-  Location
-  CHECK_OUT
-  HARD_FAIL
-  INVENTORY
-  PLANNED
-  QUARANTINE
-  RESERVED
-  SPARE
-  Total
-*/
-
-.table-grid {
-  --columns:
-    120px   /* Part Type */
-    140px   /* Description */
-    2fr     /* Model (largest space) */
-    140px   /* Location */
-    55px    /* CO */
-    55px    /* HF */
-    55px    /* INV */
-    55px    /* PL */
-    55px    /* QT */
-    55px    /* RES */
-    55px    /* SP */
-    70px;   /* Total */
-
-  display: grid;
-  grid-template-columns: var(--columns);
-  align-items: center;
+table {
+  border-collapse: collapse;
+  min-width: max-content;
   width: 100%;
   font-size: 13px;
 }
 
-.table-row {
-  display: contents;
-}
-
-.table-row div {
-  padding: 6px 8px;
-  border-bottom: 1px solid #e5e7eb;
-  overflow: hidden;
-  text-overflow: ellipsis;
+th, td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
   white-space: nowrap;
 }
 
-/* Allow only model column to wrap */
-.table-row div:nth-child(3) {
-  white-space: normal;
-}
-
-/* Center numeric columns (status + total) */
-.table-row div:nth-child(n+5) {
-  text-align: center;
-}
-
-/* Header styling */
-.header div {
-  font-weight: 600;
+th {
   background: #f3f4f6;
-  border-bottom: 2px solid #d1d5db;
+  font-weight: 600;
 }
-
-/* =====================================================
-   FLAT VIEW
-===================================================== */
-
-.flat-container {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #ffffff;
-}
-
-/* =====================================================
-   LOW STOCK
-===================================================== */
 
 .low-stock {
   color: #dc2626;
   font-weight: 600;
-}
-
-/* =====================================================
-   SCROLL SAFETY (FOR LARGE WIDTH TABLES)
-===================================================== */
-
-.table-wrapper {
-  overflow-x: auto;
 }
