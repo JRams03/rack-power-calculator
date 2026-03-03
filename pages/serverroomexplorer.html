@@ -1199,12 +1199,12 @@ function renderRooms() {
 
   // Switch
   if (func.includes("switch")) {
-    return device.model || device.motherboard || "-";
+    return device.model ||"-";
   }
 
   // Powerstrip
   if (func.includes("powerstrip")) {
-    return device.manufacturer || device.motherboard || "-";
+    return device.manufacturer || "-";
   }
 
   // Default (servers etc)
