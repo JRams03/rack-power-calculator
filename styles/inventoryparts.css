@@ -38,11 +38,6 @@
   cursor: pointer;
 }
 
-.group-body {
-  display: none;
-  padding: 14px;
-}
-
 .group-search {
   margin-bottom: 10px;
   padding: 6px 10px;
