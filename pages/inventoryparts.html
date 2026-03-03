@@ -178,12 +178,20 @@ function renderGrouped() {
 
 const groups = {};
 
-const partColumn = headers.find(h =>
+// probeer part kolom te vinden
+let partColumn = headers.find(h =>
   h.toLowerCase().includes("part")
 );
 
+// fallback als niets gevonden wordt
+if (!partColumn) {
+  console.warn("No part column detected. Using first header as grouping key.");
+  partColumn = headers[0];
+}
+
 filteredData.forEach(row => {
-  const key = row[partColumn] || "Unknown";
+  const key = row[partColumn] ? String(row[partColumn]).trim() : "Unknown";
+
   if (!groups[key]) groups[key] = [];
   groups[key].push(row);
 });
