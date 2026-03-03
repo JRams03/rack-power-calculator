@@ -411,6 +411,21 @@ function renderFlat() {
    HELPERS
 ============================= */
 
+function shortHeader(name) {
+
+  const map = {
+    "CHECK_OUT": "CO",
+    "HARD_FAIL": "HF",
+    "INVENTORY": "INV",
+    "PLANNED": "PL",
+    "QUARANTINE": "QT",
+    "RESERVED": "RES",
+    "SPARE": "SP"
+  };
+
+  return map[name] || name;
+}
+
 function populateLocationFilter() {
   const unique = [
     ...new Set(rawData.map(r =>
