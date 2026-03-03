@@ -1560,7 +1560,7 @@ function renderPduPanel(rack, list) {
     renderServerTechPanel(rack, list);
     return;
   }
-  
+
   }
   
 
@@ -1732,16 +1732,15 @@ function renderAPCPanel(rack, list) {
       </div>
 
       <div class="power-section">
-        <div class="power-section-title">Bank Usage</div>
-        ${renderUsageBar("Top", bankTop, BANK_LIMIT)}
-        ${renderUsageBar("Bottom", bankBottom, BANK_LIMIT)}
-      </div>
-
-      <div class="power-section">
         <div class="power-section-title">Phase Usage</div>
         ${renderUsageBar("L1", phase, PHASE_LIMIT)}
       </div>
 
+      <div class="power-section">
+        <div class="power-section-title">Bank Usage</div>
+        ${renderUsageBar("Top", bankTop, BANK_LIMIT)}
+        ${renderUsageBar("Bottom", bankBottom, BANK_LIMIT)}
+      </div>
     </div>
   `;
 }
