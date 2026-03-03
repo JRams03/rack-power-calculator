@@ -1,20 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Inventory Parts</title>
-
-<link rel="stylesheet" href="../styles/base.css">
-<link rel="stylesheet" href="../styles/inventoryparts.css">
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-</head>
-<body>
-
-<div id="content"></div>
-
 <script type="module">
-
 import { loadLayout } from "../app/layout.js";
 
 /* ================= STATE ================= */
@@ -28,25 +12,14 @@ let viewMode = "grouped";
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("inventoryparts");
-  initPage();
-});
-
-function initPage() {
   renderPage();
   attachEvents();
-}
+});
 
 /* ================= PAGE STRUCTURE ================= */
 
 function renderPage() {
-  const content = document.getElementById("content");
-
-  if (!content) {
-    console.error("Layout failed to inject #content");
-    return;
-  }
-
-  content.innerHTML = `
+  document.getElementById("content").innerHTML = `
     <h2>Inventory Parts</h2>
 
     <div class="control-bar">
@@ -66,13 +39,13 @@ function renderPage() {
 /* ================= EVENTS ================= */
 
 function attachEvents() {
-  document.getElementById("csvInput")?.addEventListener("change", handleCSV);
-  document.getElementById("globalSearch")?.addEventListener("input", update);
-  document.getElementById("viewToggle")?.addEventListener("change", e => {
+  document.getElementById("csvInput").addEventListener("change", handleCSV);
+  document.getElementById("globalSearch").addEventListener("input", update);
+  document.getElementById("viewToggle").addEventListener("change", e => {
     viewMode = e.target.value;
     render();
   });
-  document.getElementById("resetBtn")?.addEventListener("click", resetAll);
+  document.getElementById("resetBtn").addEventListener("click", resetAll);
 }
 
 /* ================= CSV LOAD ================= */
@@ -82,42 +55,47 @@ function handleCSV(e) {
   if (!file) return;
 
   Papa.parse(file, {
-    header: true,
+    header: false,
     skipEmptyLines: true,
+    delimiter: ",",
     complete: result => {
 
-      const data = result.data
-        .map(row => {
-          delete row._parsed_extra;
-          return row;
-        })
-        .filter(row =>
-          Object.values(row).some(v => v !== "")
-        );
-
-      if (!data.length) {
-        console.warn("CSV contains no usable data");
+      if (!result.data || result.data.length < 2) {
+        console.error("Invalid CSV");
         return;
       }
 
-      headers = Object.keys(data[0]);
+      // Headers (remove empty trailing column)
+      headers = result.data[0]
+        .map(h => String(h).trim())
+        .filter(Boolean);
 
-      const totalColumn = headers.find(h =>
-        h.trim().toLowerCase() === "total"
+      const totalIndex = headers.findIndex(h =>
+        h.toLowerCase() === "total"
       );
 
-      rawData = totalColumn
-        ? data.filter(row => Number(row[totalColumn]) !== 0)
-        : data;
+      const rows = result.data.slice(1);
 
-      filteredData = rawData;
+      rawData = rows
+        .map(row => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            obj[header] = String(row[index] ?? "").trim();
+          });
+          return obj;
+        })
+        .filter(row => {
+          if (totalIndex === -1) return true;
+          const total = Number(row[headers[totalIndex]]);
+          return !isNaN(total) && total !== 0;
+        });
 
-      render();
+      update();
     }
   });
 }
 
-/* ================= UPDATE ================= */
+/* ================= FILTER ================= */
 
 function update() {
   const search = document.getElementById("globalSearch").value
@@ -126,8 +104,8 @@ function update() {
     .filter(Boolean);
 
   filteredData = rawData.filter(row => {
-    const rowText = Object.values(row).join(" ").toLowerCase();
-    return search.every(term => rowText.includes(term));
+    const text = Object.values(row).join(" ").toLowerCase();
+    return search.every(term => text.includes(term));
   });
 
   render();
@@ -136,28 +114,22 @@ function update() {
 /* ================= RENDER ================= */
 
 function render() {
-  const container = document.getElementById("tableContainer");
-  if (!container) return;
-
-  if (!filteredData.length) {
-    container.innerHTML = "<p>No data</p>";
-    return;
-  }
-
   if (viewMode === "flat") {
-    renderFlat(container);
+    renderFlat();
   } else {
-    renderGrouped(container);
+    renderGrouped();
   }
 }
 
 /* ================= FLAT VIEW ================= */
 
-function renderFlat(container) {
+function renderFlat() {
+  const container = document.getElementById("tableContainer");
 
-  const totalColumn = headers.find(h =>
-    h.trim().toLowerCase() === "total"
-  );
+  if (!filteredData.length) {
+    container.innerHTML = "<p>No data</p>";
+    return;
+  }
 
   container.innerHTML = `
     <div class="table-wrapper">
@@ -172,11 +144,11 @@ function renderFlat(container) {
             <tr>
               ${headers.map(h => `
                 <td class="${
-                  h === totalColumn && Number(row[h]) < 5
+                  h.toLowerCase() === "total" && Number(row[h]) < 5
                     ? "low-stock"
                     : ""
                 }">
-                  ${row[h] ?? ""}
+                  ${row[h] || ""}
                 </td>
               `).join("")}
             </tr>
@@ -189,15 +161,17 @@ function renderFlat(container) {
 
 /* ================= GROUPED VIEW ================= */
 
-function renderGrouped(container) {
+function renderGrouped() {
+  const container = document.getElementById("tableContainer");
 
-  const totalColumn = headers.find(h =>
-    h.trim().toLowerCase() === "total"
+  if (!filteredData.length) {
+    container.innerHTML = "<p>No data</p>";
+    return;
+  }
+
+  const partColumn = headers.find(h =>
+    h.toLowerCase().includes("part")
   );
-
-  const partColumn =
-    headers.find(h => h.toLowerCase().includes("part")) ||
-    headers[0];
 
   const groups = {};
 
@@ -210,12 +184,21 @@ function renderGrouped(container) {
   container.innerHTML = Object.entries(groups)
     .map(([groupName, rows], index) => `
       <div class="group">
-        <div class="group-header" data-id="${index}">
+
+        <div class="group-header" data-group="${index}">
           <span>${groupName}</span>
-          <span>Total: ${sumTotal(rows, totalColumn)}</span>
+          <span>Total: ${sumTotal(rows)}</span>
         </div>
 
         <div class="group-body" id="group-${index}" style="display:block;">
+
+          <input 
+            type="text"
+            class="group-search"
+            data-group="${index}"
+            placeholder="Filter within group..."
+          />
+
           <div class="table-wrapper">
             <table>
               <thead>
@@ -225,14 +208,14 @@ function renderGrouped(container) {
               </thead>
               <tbody>
                 ${rows.map(row => `
-                  <tr>
+                  <tr data-group="${index}">
                     ${headers.map(h => `
                       <td class="${
-                        h === totalColumn && Number(row[h]) < 5
+                        h.toLowerCase() === "total" && Number(row[h]) < 5
                           ? "low-stock"
                           : ""
                       }">
-                        ${row[h] ?? ""}
+                        ${row[h] || ""}
                       </td>
                     `).join("")}
                   </tr>
@@ -240,41 +223,59 @@ function renderGrouped(container) {
               </tbody>
             </table>
           </div>
+
         </div>
+
       </div>
     `).join("");
 
   attachGroupToggle();
+  attachGroupSearch();
 }
 
-function sumTotal(rows, totalColumn) {
-  if (!totalColumn) return rows.length;
+/* ================= HELPERS ================= */
+
+function sumTotal(rows) {
+  const totalColumn = headers.find(h =>
+    h.toLowerCase() === "total"
+  );
+
+  if (!totalColumn) return 0;
 
   return rows.reduce((sum, r) =>
     sum + Number(r[totalColumn] || 0), 0);
 }
 
-/* ================= GROUP TOGGLE ================= */
-
 function attachGroupToggle() {
   document.querySelectorAll(".group-header").forEach(header => {
     header.addEventListener("click", () => {
-      const id = header.dataset.id;
+      const id = header.dataset.group;
       const body = document.getElementById(`group-${id}`);
       body.style.display =
-        body.style.display === "block" ? "none" : "block";
+        body.style.display === "none" ? "block" : "none";
     });
   });
 }
 
-/* ================= RESET ================= */
+function attachGroupSearch() {
+  document.querySelectorAll(".group-search").forEach(input => {
+    input.addEventListener("input", e => {
+      const groupId = e.target.dataset.group;
+      const terms = e.target.value.toLowerCase().split(" ").filter(Boolean);
+
+      document.querySelectorAll(`tr[data-group="${groupId}"]`)
+        .forEach(row => {
+          const text = row.textContent.toLowerCase();
+          const match = terms.every(t => text.includes(t));
+          row.style.display = match ? "" : "none";
+        });
+    });
+  });
+}
 
 function resetAll() {
   document.getElementById("globalSearch").value = "";
   filteredData = rawData;
   render();
 }
-
 </script>
-</body>
-</html>
