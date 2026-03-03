@@ -152,15 +152,11 @@ function render() {
 /* ================= FLAT VIEW ================= */
 
 function renderFlat() {
-    console.log("HEADERS IN RENDER:", headers);
-    console.log("FILTERED IN RENDER:", filteredData.length);
-    console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
     container.innerHTML = "<p>No data</p>";
     return;
-    console.log("HTML LENGTH:", container.innerHTML.length);
   }
 
   container.innerHTML = `
@@ -189,40 +185,27 @@ function renderFlat() {
   `;
 }
 
-
 /* ================= GROUPED VIEW ================= */
 
 function renderGrouped() {
-    console.log("HEADERS IN RENDER:", headers);
-    console.log("FILTERED IN RENDER:", filteredData.length);
-    console.log(document.getElementById("tableContainer"));
   const container = document.getElementById("tableContainer");
 
   if (!filteredData.length) {
     container.innerHTML = "<p>No data</p>";
     return;
-    console.log("HTML LENGTH:", container.innerHTML.length);
   }
 
-const groups = {};
+  const groups = {};
 
-// probeer part kolom te vinden
-let partColumn = headers.find(h =>
-  h.toLowerCase().includes("part")
-);
+  const partColumn = headers.find(h =>
+    h.toLowerCase().includes("part")
+  );
 
-// fallback als niets gevonden wordt
-if (!partColumn) {
-  console.warn("No part column detected. Using first header as grouping key.");
-  partColumn = headers[0];
-}
-
-filteredData.forEach(row => {
-  const key = row[partColumn] ? String(row[partColumn]).trim() : "Unknown";
-
-  if (!groups[key]) groups[key] = [];
-  groups[key].push(row);
-});
+  filteredData.forEach(row => {
+    const key = row[partColumn] || "Unknown";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(row);
+  });
 
   container.innerHTML = Object.entries(groups)
     .map(([groupName, rows], index) => `
@@ -233,7 +216,7 @@ filteredData.forEach(row => {
           <span>Total: ${sumTotal(rows)}</span>
         </div>
 
-        <div class="group-body" id="group-${index}">
+        <div class="group-body" id="group-${index}" style="display:block;">
 
           <input 
             type="text"
