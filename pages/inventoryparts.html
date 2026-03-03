@@ -28,6 +28,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("inventoryparts");
   renderPage();
   attachEvents();
+  restoreFromStorage();
 });
 
 /* ================= PAGE STRUCTURE ================= */
@@ -107,6 +108,23 @@ function handleCSV(e) {
       update();
     }
   });
+
+localStorage.setItem("inventory_headers", JSON.stringify(headers));
+localStorage.setItem("inventory_data", JSON.stringify(rawData));
+
+}
+
+function restoreFromStorage() {
+  const storedHeaders = localStorage.getItem("inventory_headers");
+  const storedData = localStorage.getItem("inventory_data");
+
+  if (!storedHeaders || !storedData) return;
+
+  headers = JSON.parse(storedHeaders);
+  rawData = JSON.parse(storedData);
+  filteredData = rawData;
+
+  render();
 }
 
 /* ================= FILTER ================= */
@@ -285,8 +303,14 @@ function attachGroupSearch() {
 }
 
 function resetAll() {
+  localStorage.removeItem("inventory_headers");
+  localStorage.removeItem("inventory_data");
+
+  rawData = [];
+  filteredData = [];
+  headers = [];
+
   document.getElementById("globalSearch").value = "";
-  filteredData = rawData;
-  render();
+  document.getElementById("tableContainer").innerHTML = "";
 }
 </script>
