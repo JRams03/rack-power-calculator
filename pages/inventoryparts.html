@@ -3,88 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <title>Inventory Parts</title>
+
   <link rel="stylesheet" href="../styles/base.css">
   <link rel="stylesheet" href="../styles/inventoryparts.css">
-
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-L0J7RTR14Z"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-L0J7RTR14Z');
-  </script>
 
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
+<div id="content">
+
+  <h2>Inventory Parts</h2>
+
+  <div class="control-bar">
+    <input type="file" id="csvInput" accept=".csv">
+    <input type="text" id="searchInput" placeholder="Search (multi-term supported)">
+    <button id="clearBtn">Clear</button>
+    <button id="exportBtn">Export Filtered</button>
+  </div>
+
+  <div id="filterBar" class="filter-bar"></div>
+  <div id="statsBar" class="stats-bar"></div>
+  <div id="tableContainer"></div>
+
+</div>
+
 <script type="module">
 import { loadLayout } from "../app/layout.js";
 
 let inventoryData = [];
+let filteredData = [];
 
-function render() {
-  document.getElementById("content").innerHTML = `
-    <h2>Inventory Parts</h2>
+let activeFilters = {};
+let activeSearch = "";
+let activeSort = { column: null, direction: "asc" };
 
-    <div class="control-bar">
-      <input type="file" id="csvInput" accept=".csv">
-      <input type="text" id="searchInput" placeholder="Search assets...">
-      <button id="clearBtn">Clear</button>
-    </div>
-
-    <div id="statsBar"></div>
-    <div id="tableContainer"></div>
-  `;
-
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadLayout("inventoryparts");
   initEvents();
-}
+  document.body.classList.add("page-loaded");
+});
+
+/* =========================
+   EVENTS
+========================= */
 
 function initEvents() {
-  const csvInput = document.getElementById("csvInput");
-  const searchInput = document.getElementById("searchInput");
-  const clearBtn = document.getElementById("clearBtn");
+  document.getElementById("csvInput").addEventListener("change", handleCSV);
 
-  csvInput.addEventListener("change", e => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: result => {
-        inventoryData = result.data;
-        renderTable(inventoryData);
-        renderStats(inventoryData);
-      }
-    });
+  document.getElementById("searchInput").addEventListener("input", e => {
+    activeSearch = e.target.value.trim();
+    applyAllFilters();
   });
 
-  searchInput.addEventListener("input", () => {
-    const query = searchInput.value.toLowerCase();
+  document.getElementById("clearBtn").addEventListener("click", resetAll);
 
-    const filtered = inventoryData.filter(row =>
-      Object.values(row).some(val =>
-        String(val).toLowerCase().includes(query)
-      )
-    );
+  document.getElementById("exportBtn").addEventListener("click", exportFiltered);
+}
 
-    renderTable(filtered);
-    renderStats(filtered);
-  });
+/* =========================
+   CSV LOAD
+========================= */
 
-  clearBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    renderTable(inventoryData);
-    renderStats(inventoryData);
+function handleCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: result => {
+      inventoryData = result.data;
+      generateColumnFilters(inventoryData);
+      applyAllFilters();
+    }
   });
 }
 
+/* =========================
+   FILTER ENGINE
+========================= */
+
+function applyAllFilters() {
+  let result = [...inventoryData];
+
+  // Column filters
+  Object.entries(activeFilters).forEach(([col, val]) => {
+    if (val) {
+      result = result.filter(row => row[col] === val);
+    }
+  });
+
+  // Search
+  result = applySearch(result);
+
+  // Sorting
+  if (activeSort.column) {
+    result.sort((a, b) => {
+      const valA = a[activeSort.column] || "";
+      const valB = b[activeSort.column] || "";
+
+      return activeSort.direction === "asc"
+        ? valA.localeCompare(valB, undefined, { numeric: true })
+        : valB.localeCompare(valA, undefined, { numeric: true });
+    });
+  }
+
+  filteredData = result;
+
+  renderTable(filteredData);
+  renderStats(filteredData);
+}
+
+/* =========================
+   SEARCH (Multi-term AND)
+========================= */
+
+function applySearch(data) {
+  if (!activeSearch) return data;
+
+  const terms = activeSearch
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean);
+
+  return data.filter(row => {
+    const rowString = Object.values(row).join(" ").toLowerCase();
+    return terms.every(term => rowString.includes(term));
+  });
+}
+
+/* =========================
+   COLUMN FILTERS
+========================= */
+
+function generateColumnFilters(data) {
+  if (!data.length) return;
+
+  const headers = Object.keys(data[0]);
+  const filterBar = document.getElementById("filterBar");
+
+  filterBar.innerHTML = headers.map(header => {
+    const uniqueValues = [...new Set(
+      data.map(row => row[header]).filter(v => v && v.length < 50)
+    )];
+
+    if (uniqueValues.length > 50) return "";
+
+    return `
+      <select data-column="${header}" class="column-filter">
+        <option value="">All ${header}</option>
+        ${uniqueValues.sort().map(val => `
+          <option value="${val}">${val}</option>
+        `).join("")}
+      </select>
+    `;
+  }).join("");
+
+  document.querySelectorAll(".column-filter").forEach(select => {
+    select.addEventListener("change", e => {
+      const col = e.target.dataset.column;
+      activeFilters[col] = e.target.value;
+      applyAllFilters();
+    });
+  });
+}
+
+/* =========================
+   TABLE
+========================= */
+
 function renderTable(data) {
-  const tableContainer = document.getElementById("tableContainer");
+  const container = document.getElementById("tableContainer");
 
   if (!data.length) {
-    tableContainer.innerHTML = "<p>No data loaded.</p>";
+    container.innerHTML = "<p>No data available.</p>";
     return;
   }
 
@@ -92,7 +185,11 @@ function renderTable(data) {
 
   const headerRow = `
     <div class="table-row header">
-      ${headers.map(h => `<div>${h}</div>`).join("")}
+      ${headers.map(h => `
+        <div class="sortable" data-column="${h}">
+          ${h}
+        </div>
+      `).join("")}
     </div>
   `;
 
@@ -102,29 +199,82 @@ function renderTable(data) {
     </div>
   `).join("");
 
-  tableContainer.innerHTML = `
+  container.innerHTML = `
     <div class="table-grid">
       ${headerRow}
       ${rows}
     </div>
   `;
+
+  attachSortEvents();
 }
 
-function renderStats(data) {
-  const statsBar = document.getElementById("statsBar");
+function attachSortEvents() {
+  document.querySelectorAll(".sortable").forEach(el => {
+    el.addEventListener("click", () => {
+      const col = el.dataset.column;
 
-  statsBar.innerHTML = `
+      if (activeSort.column === col) {
+        activeSort.direction =
+          activeSort.direction === "asc" ? "desc" : "asc";
+      } else {
+        activeSort.column = col;
+        activeSort.direction = "asc";
+      }
+
+      applyAllFilters();
+    });
+  });
+}
+
+/* =========================
+   STATS
+========================= */
+
+function renderStats(data) {
+  document.getElementById("statsBar").innerHTML = `
     <div class="stat-box">
-      Total Assets: <strong>${data.length}</strong>
+      Showing: <strong>${data.length}</strong>
+    </div>
+    <div class="stat-box">
+      Total Loaded: <strong>${inventoryData.length}</strong>
     </div>
   `;
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-  await loadLayout("inventoryparts");
-  render();
-  document.body.classList.add("page-loaded");
-});
+/* =========================
+   RESET
+========================= */
+
+function resetAll() {
+  activeSearch = "";
+  activeFilters = {};
+  activeSort = { column: null, direction: "asc" };
+
+  document.getElementById("searchInput").value = "";
+  document.getElementById("filterBar").innerHTML = "";
+
+  generateColumnFilters(inventoryData);
+  applyAllFilters();
+}
+
+/* =========================
+   EXPORT
+========================= */
+
+function exportFiltered() {
+  if (!filteredData.length) return;
+
+  const csv = Papa.unparse(filteredData);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "filtered_inventory.csv";
+  a.click();
+}
+
 </script>
 
 </body>
