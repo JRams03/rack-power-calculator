@@ -906,7 +906,7 @@ card.onclick = () => {
   detail.classList.remove("visible");
 
   renderRackDetail(rack, list);
-  renderPowerSummary(rack, list);
+  renderPduPanel(rack, list);
   showPduButton();
 
   requestAnimationFrame(() => {
@@ -1183,15 +1183,30 @@ function renderRooms() {
 }
 }
 
- /**********************************************************************************************/
 
+function getRackPduType(list) {
 
+  const pduDevices = list.filter(d =>
+    (d.hardwareFunction || "").toLowerCase().includes("power")
+  );
 
- /**********************************************************************************************/
+  if (!pduDevices.length) return null;
 
+  const manufacturers = [
+    ...new Set(
+      pduDevices.map(d =>
+        (d.manufacturer || "").toLowerCase()
+      )
+    )
+  ];
 
+  if (manufacturers.some(m => m.includes("eaton"))) return "eaton";
+  if (manufacturers.some(m => m.includes("apc"))) return "apc";
+  if (manufacturers.some(m => m.includes("servertech"))) return "servertech";
 
- /**********************************************************************************************/
+  return "unknown";
+}
+
 
  function getBoardDisplay(device) {
 
@@ -1518,6 +1533,39 @@ function renderRackDetail(rack, list) {
 }
 
  /**********************************************************************************************/
+
+function renderPduPanel(rack, list) {
+
+  const type = getRackPduType(list);
+
+  const rightPane = document.querySelector(".right-pane");
+  if (!rightPane) return;
+
+  rightPane.innerHTML = "";
+
+  if (!type) {
+    rightPane.style.display = "none";
+    return;
+  }
+
+  rightPane.style.display = "block";
+
+  if (type === "eaton") {
+    renderPduPanel(rack, list);
+    return;
+  }
+
+  if (type === "apc") {
+    renderApcPanel(rack, list); // later
+    return;
+  }
+
+  if (type === "servertech") {
+    renderServerTechPanel(rack, list); // later
+    return;
+  }
+}
+
 
 function renderPowerSummary(rack, list) {
 console.log(
