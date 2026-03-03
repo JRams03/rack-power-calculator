@@ -73,34 +73,36 @@ function handleCSV(e) {
   if (!file) return;
 
   Papa.parse(file, {
-    header: true,
+    header: false, // 🔥 geen header mode
     skipEmptyLines: true,
-    delimiter: "", // auto detect
-    dynamicTyping: false,
+    delimiter: ",",
     complete: result => {
 
-      console.log("PARSE RESULT:", result);
-
-      if (!result.data || !result.data.length) {
-        console.error("CSV parsed but no rows detected.");
+      if (!result.data || result.data.length < 2) {
+        console.error("CSV invalid or empty");
         return;
       }
 
-      const cleaned = result.data.map(row => {
-        const newRow = {};
+      // Eerste rij = headers
+      const rawHeaders = result.data[0]
+        .map(h => String(h).trim())
+        .filter(Boolean); // verwijder lege kolom door trailing comma
 
-        Object.keys(row).forEach(k => {
-          if (!k) return;
-          const cleanKey = k.trim();
-          newRow[cleanKey] = row[k];
+      headers = rawHeaders;
+
+      // Rest = data
+      const rows = result.data.slice(1);
+
+      rawData = rows.map(row => {
+        const obj = {};
+
+        headers.forEach((header, index) => {
+          obj[header] = row[index] ?? "";
         });
 
-        return newRow;
-      });
-
-      headers = Object.keys(cleaned[0]);
-
-      rawData = cleaned.filter(row => {
+        return obj;
+      })
+      .filter(row => {
         const total = Number(String(row["Total"] || "").trim());
         return !isNaN(total) && total !== 0;
       });
