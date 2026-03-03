@@ -13,7 +13,7 @@
 
 <div id="content">
 
-<h2>Inventory Parts</h2>
+
 
 <div class="control-bar">
   <input type="file" id="csvInput" accept=".csv">
@@ -105,11 +105,11 @@ function render() {
 
 function renderFlat() {
   if (!filteredData.length) {
-    tableContainer.innerHTML = "<p>No data</p>";
+    document.getElementById("tableContainer").innerHTML = "<p>No data</p>";
     return;
   }
 
-  tableContainer.innerHTML = `
+  document.getElementById("tableContainer").innerHTML = `
     <div class="table-wrapper">
       <table>
         <thead>
@@ -139,7 +139,7 @@ function renderFlat() {
 
 function renderGrouped() {
   if (!filteredData.length) {
-    tableContainer.innerHTML = "<p>No data</p>";
+    document.getElementById("tableContainer").innerHTML ="<p>No data</p>";
     return;
   }
 
