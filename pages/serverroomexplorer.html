@@ -1195,7 +1195,9 @@ function getRackPduType(list) {
   const manufacturers = [
     ...new Set(
       pduDevices.map(d =>
-        (d.manufacturer || "").toLowerCase()
+        (d.manufacturer || "")
+          .toLowerCase()
+          .replace(/\s+/g, "")   // 🔥 verwijder spaties
       )
     )
   ];
