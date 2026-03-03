@@ -12,24 +12,14 @@
 <body>
 
 <div id="content">
-
-
-
-<div class="control-bar">
-  <input type="file" id="csvInput" accept=".csv">
-  <input type="text" id="globalSearch" placeholder="Search...">
-  <select id="viewToggle">
-    <option value="grouped">Grouped View</option>
-    <option value="flat">Flat View</option>
-  </select>
-  <button id="resetBtn">Reset</button>
+  <!-- Layout injecteert hier zijn content -->
 </div>
 
-<div id="tableContainer"></div>
+<script type="module">
+import { loadLayout } from "../app/layout.js";
 
-</div>
+/* ================= STATE ================= */
 
-<script>
 let rawData = [];
 let filteredData = [];
 let headers = [];
@@ -37,7 +27,35 @@ let viewMode = "grouped";
 
 /* ================= INIT ================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadLayout("inventoryparts");
+  renderPage();
+  attachEvents();
+});
+
+/* ================= PAGE STRUCTURE ================= */
+
+function renderPage() {
+  document.getElementById("content").innerHTML = `
+    <h2>Inventory Parts</h2>
+
+    <div class="control-bar">
+      <input type="file" id="csvInput" accept=".csv">
+      <input type="text" id="globalSearch" placeholder="Search...">
+      <select id="viewToggle">
+        <option value="grouped">Grouped View</option>
+        <option value="flat">Flat View</option>
+      </select>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <div id="tableContainer"></div>
+  `;
+}
+
+/* ================= EVENTS ================= */
+
+function attachEvents() {
   document.getElementById("csvInput").addEventListener("change", handleCSV);
   document.getElementById("globalSearch").addEventListener("input", update);
   document.getElementById("viewToggle").addEventListener("change", e => {
@@ -45,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
   document.getElementById("resetBtn").addEventListener("click", resetAll);
-});
+}
 
 /* ================= CSV LOAD ================= */
 
@@ -63,7 +81,9 @@ function handleCSV(e) {
         return row;
       });
 
-      headers = Object.keys(data[0] || {});
+      if (!data.length) return;
+
+      headers = Object.keys(data[0]);
 
       rawData = data.filter(row => {
         const total = Number(row["Total"]);
@@ -104,12 +124,14 @@ function render() {
 /* ================= FLAT VIEW ================= */
 
 function renderFlat() {
+  const container = document.getElementById("tableContainer");
+
   if (!filteredData.length) {
-    document.getElementById("tableContainer").innerHTML = "<p>No data</p>";
+    container.innerHTML = "<p>No data</p>";
     return;
   }
 
-  document.getElementById("tableContainer").innerHTML = `
+  container.innerHTML = `
     <div class="table-wrapper">
       <table>
         <thead>
@@ -138,8 +160,10 @@ function renderFlat() {
 /* ================= GROUPED VIEW ================= */
 
 function renderGrouped() {
+  const container = document.getElementById("tableContainer");
+
   if (!filteredData.length) {
-    document.getElementById("tableContainer").innerHTML ="<p>No data</p>";
+    container.innerHTML = "<p>No data</p>";
     return;
   }
 
@@ -151,7 +175,7 @@ function renderGrouped() {
     groups[key].push(row);
   });
 
-  tableContainer.innerHTML = Object.entries(groups)
+  container.innerHTML = Object.entries(groups)
     .map(([groupName, rows], index) => `
       <div class="group">
 
@@ -244,7 +268,7 @@ function resetAll() {
   filteredData = rawData;
   render();
 }
-</script>
 
+</script>
 </body>
 </html>
