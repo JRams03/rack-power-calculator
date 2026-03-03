@@ -260,43 +260,51 @@ function renderGrouped() {
       const total = getGroupTotal(rows);
       const groupId = `group-${index}`;
 
-      const tableHeader = `
-        <div class="table-row header">
-          ${headers.map(h => `<div>${h}</div>`).join("")}
-        </div>
-      `;
-
-      const tableRows = rows.map(r => `
-        <div class="table-row group-row" data-group="${groupId}">
-          ${headers.map(h => `
-            <div class="${
-              h === columns.total &&
-              Number(r[h]) < 5 ? "low-stock" : ""
-            }">
-              ${r[h]}
-            </div>
-          `).join("")}
-        </div>
-      `).join("");
-
       return `
         <div class="group">
+
           <div class="group-header">
             <span>${part}</span>
             <span>Total: ${total}</span>
           </div>
+
           <div class="group-body">
+
             <input 
               type="text"
               class="group-search"
               data-group="${groupId}"
               placeholder="Filter within group..."
             />
+
             <div class="table-grid">
-              ${tableHeader}
-              ${tableRows}
+
+              <div class="table-row header">
+                ${headers.map(h =>
+                  `<div>${shortHeader(h)}</div>`
+                ).join("")}
+              </div>
+
+              ${rows.map(r => `
+                <div class="table-row group-row"
+                     data-group="${groupId}">
+                  ${headers.map(h => `
+                    <div class="${
+                      h === columns.total &&
+                      Number(r[h]) < 5
+                        ? "low-stock"
+                        : ""
+                    }">
+                      ${r[h]}
+                    </div>
+                  `).join("")}
+                </div>
+              `).join("")}
+
             </div>
+
           </div>
+
         </div>
       `;
     }).join("");
@@ -315,7 +323,8 @@ function attachGroupSearch() {
       input.addEventListener("input", e => {
 
         const groupId = e.target.dataset.group;
-        const query = e.target.value
+
+        const terms = e.target.value
           .toLowerCase()
           .split(" ")
           .filter(Boolean);
@@ -326,14 +335,15 @@ function attachGroupSearch() {
 
         rows.forEach(row => {
 
-          const rowText = row.textContent.toLowerCase();
+          const text = row.textContent.toLowerCase();
 
-          const match = query.every(term =>
-            rowText.includes(term)
+          const match = terms.every(term =>
+            text.includes(term)
           );
 
           row.style.display = match ? "" : "none";
         });
+
       });
     });
 }
