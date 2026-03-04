@@ -875,6 +875,10 @@ function createRackCard({ title, rack, list }) {
     card.classList.add(`type-${classification}`);
   }
 
+  const usedSlots = list.filter(s => {
+  const slot = String(s.slot || "").trim();
+  return !isNaN(slot) && Number(slot) >= 1 && Number(slot) <= MAX_SLOTS;}).length;
+
   card.innerHTML = `
     ${classification ? `
       <div class="rack-type-pill type-${classification}">
@@ -883,7 +887,7 @@ function createRackCard({ title, rack, list }) {
     ` : ""}
 
     <div class="rack-title">${title}</div>
-    <div>${list.length} / ${MAX_SLOTS} used</div>
+    <div>${usedSlots} / ${MAX_SLOTS} used</div>
 
     <div class="rack-stats">
       ${
