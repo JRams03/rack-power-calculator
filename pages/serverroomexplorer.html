@@ -42,6 +42,7 @@ let currentRackServers = [];
 let rackServers = [];
 let activeStatusFilters = new Set();
 let activeRoomFilter = "ALL";
+let loggedPowerRacks = new Set();
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("serverroom");
@@ -1466,11 +1467,16 @@ function renderRackDetail(rack, list) {
 
     if (server) {
 
-        if ((server.hardwareFunction || "").toLowerCase().includes("power")) {
-            console.log("HardwareFunction:", server.hardwareFunction);
-            console.log("Manufacturer:", server.manufacturer);
-            console.log("Model:", server.model);
-        }
+           if (
+               (server.hardwareFunction || "").toLowerCase().includes("power") &&
+               !loggedPowerRacks.has(selectedRackId)
+           ) {
+           
+               console.log(`[Rack ${selectedRackId}] Power strip`);
+               console.log(`${server.manufacturer} ${server.model}`);
+           
+               loggedPowerRacks.add(selectedRackId);
+           }
 
       const isNumeric = !isNaN(slotKey);
       let uHeight = 1;
