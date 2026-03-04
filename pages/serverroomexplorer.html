@@ -855,15 +855,16 @@ function createRackCard({ title, rack, list }) {
       .replace(/\s+/g, "_");
 
     if (!status) return;
-
     stats[status] = (stats[status] || 0) + 1;
   });
+
 
   const card = document.createElement("div");
   card.className = "rack-card";
   card.dataset.rack = rack;
   card.dataset.room = list[0]?.room || "";
   card.dataset.dc   = list[0]?.dc   || "";
+
 
   const classification = getRackClassification(
     list[0]?.dc,
@@ -876,10 +877,53 @@ function createRackCard({ title, rack, list }) {
   }
 
   const usedSlots = list.filter(s => {
-  const slot = String(s.slot || "").trim();
-  return !isNaN(slot) && Number(slot) >= 1 && Number(slot) <= MAX_SLOTS;}).length;
+    const slot = String(s.slot || "").trim();
+    return !isNaN(slot) && Number(slot) >= 1 && Number(slot) <= MAX_SLOTS;
+  }).length;
+
   const percent = (usedSlots / MAX_SLOTS) * 100;
-  
+
+  let powerState = null;
+  let powerTooltip = "";
+
+  const rackInput = list
+    .filter(s => !isNaN(Number(s.slot)))
+    .map(s => ({
+      slot: Number(s.slot),
+      serverProfile: findServerProfile(s.motherboard),
+      utilization: "normal"
+    }));
+
+  if (rackInput.length > 0) {
+
+    const powerResult = calculateRack(rackInput);
+
+    if (powerResult) {
+
+      const bankWarn = powerResult.banks.some(b => b > BANK_LIMIT * 0.8);
+      const bankDanger = powerResult.banks.some(b => b > BANK_LIMIT);
+
+      const phaseWarn = powerResult.phases.some(p => p > PHASE_LIMIT * 0.8);
+      const phaseDanger = powerResult.phases.some(p => p > PHASE_LIMIT);
+
+      if (bankDanger || phaseDanger) {
+        powerState = "danger";
+        powerTooltip = "Power overload detected";
+      }
+      else if (bankWarn || phaseWarn) {
+        powerState = "warn";
+        powerTooltip = "Power usage nearing limit";
+      }
+
+    }
+
+  }
+
+
+  /* =========================
+     CARD HTML
+  ========================= */
+
   card.innerHTML = `
     ${classification ? `
       <div class="rack-type-pill type-${classification}">
@@ -888,9 +932,11 @@ function createRackCard({ title, rack, list }) {
     ` : ""}
 
     <div class="rack-title">${title}</div>
+
     <div>${usedSlots} / ${MAX_SLOTS} used</div>
+
     <div class="rack-usage-bar">
-     <div class="rack-usage-fill" style="width:${percent}%"></div>
+      <div class="rack-usage-fill" style="width:${percent}%"></div>
     </div>
 
     <div class="rack-stats">
@@ -910,36 +956,43 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-card.onclick = () => {
+  if (powerState) {
+    const indicator = document.createElement("div");
+    indicator.className = `rack-power-warning ${powerState}`;
+    indicator.innerHTML = powerState === "danger" ? "🔺" : "⚠";
+    indicator.title = powerTooltip;
+    card.appendChild(indicator);
+  }
 
-  selectedRackId = rack;
-  log("Rack", `Selected rack ${rack}`);
-  const filteredList = list.filter(s =>
-    activeStatusFilters.size === 0 ||
-    activeStatusFilters.has(
-      (s.status || "").toUpperCase().replace(/\s+/g, "_")
-    )
-  );
+  card.onclick = () => {
 
-  currentRackServers = filteredList;
+    selectedRackId = rack;
 
-  document.querySelectorAll(".rack-card")
-    .forEach(c => c.classList.remove("active-rack"));
+    log("Rack", `Selected rack ${rack}`);
 
-  card.classList.add("active-rack");
+    const filteredList = list.filter(s =>
+      activeStatusFilters.size === 0 ||
+      activeStatusFilters.has(
+        (s.status || "").toUpperCase().replace(/\s+/g, "_")
+      )
+    );
 
-  const detail = document.getElementById("rackDetail");
-  detail.classList.remove("visible");
+    currentRackServers = filteredList;
 
-  renderRackDetail(rack, filteredList);
-  renderPduPanel(rack, filteredList);
-  showPduButton(filteredList);
+    document.querySelectorAll(".rack-card")
+      .forEach(c => c.classList.remove("active-rack"));
+    card.classList.add("active-rack");
+    const detail = document.getElementById("rackDetail");
+    detail.classList.remove("visible");
+    renderRackDetail(rack, filteredList);
+    renderPduPanel(rack, filteredList);
+    showPduButton(filteredList);
+    requestAnimationFrame(() => {
+      detail.classList.add("visible");
+      smoothScrollToDetail();
+    });
 
-  requestAnimationFrame(() => {
-    detail.classList.add("visible");
-    smoothScrollToDetail();
-  });
-};
+  };
 
   return card;
 }
