@@ -878,7 +878,8 @@ function createRackCard({ title, rack, list }) {
   const usedSlots = list.filter(s => {
   const slot = String(s.slot || "").trim();
   return !isNaN(slot) && Number(slot) >= 1 && Number(slot) <= MAX_SLOTS;}).length;
-
+  const percent = (usedSlots / MAX_SLOTS) * 100;
+  
   card.innerHTML = `
     ${classification ? `
       <div class="rack-type-pill type-${classification}">
@@ -888,6 +889,9 @@ function createRackCard({ title, rack, list }) {
 
     <div class="rack-title">${title}</div>
     <div>${usedSlots} / ${MAX_SLOTS} used</div>
+    <div class="rack-usage-bar">
+     <div class="rack-usage-fill" style="width:${percent}%"></div>
+    </div>
 
     <div class="rack-stats">
       ${
