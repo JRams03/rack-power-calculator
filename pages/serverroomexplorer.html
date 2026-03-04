@@ -41,6 +41,7 @@ let selectedRackId = null;
 let currentRackServers = [];
 let rackServers = [];
 let activeStatusFilters = new Set();
+let activeRoomFilter = "ALL";
 
 window.addEventListener("DOMContentLoaded", async () => {
   await loadLayout("serverroom");
@@ -1170,15 +1171,18 @@ function renderRooms() {
   allBtn.className = "room-btn";
   allBtn.textContent = "ALL";
 
-  allBtn.onclick = () => {
-    document.querySelectorAll(".room-btn")
-      .forEach(b => b.classList.remove("active"));
+allBtn.onclick = () => {
 
-    allBtn.classList.add("active");
-    renderAllRooms(filtered);
-    renderStatusOverview(rackServers);
-  };
+  activeRoomFilter = "ALL";
 
+  document.querySelectorAll(".room-btn")
+    .forEach(b => b.classList.remove("active"));
+
+  allBtn.classList.add("active");
+
+  renderAllRooms(filtered);
+  renderStatusOverview(rackServers);
+};
   container.appendChild(allBtn);
 
   rooms.forEach(room => {
