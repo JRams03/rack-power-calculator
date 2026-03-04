@@ -230,6 +230,22 @@ const STATUS_SHORT = {
 
 /* ========================= HELPERS ========================= */
 
+const LOG = true;
+
+function log(section, message, data = null) {
+
+  if (!LOG) return;
+
+  const prefix = `[ServerRoom][${section}]`;
+
+  if (data !== null) {
+    console.log(`${prefix} ${message}`, data);
+  } else {
+    console.log(`${prefix} ${message}`);
+  }
+}
+
+
 function showPduButton(list) {
 
   const container = document.getElementById("pduLaunchContainer");
@@ -281,20 +297,16 @@ function showPduButton(list) {
 }
 
 
- /**********************************************************************************************/
-
 function extractSlotNumber(value) {
   const match = value?.match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 }
 
- /**********************************************************************************************/
 
 function statusClass(status) {
   return status ? "status-" + status.toUpperCase() : "";
 }
 
- /**********************************************************************************************/
 
 function cleanBoardName(full) {
   if (!full) return "";
@@ -309,7 +321,7 @@ function cleanBoardName(full) {
 
   return full.split(" ")[1] ?? full;
 }
- /**********************************************************************************************/
+ 
 
 function findServerProfile(boardName) {
   if (!boardName) return null;
@@ -323,7 +335,6 @@ function findServerProfile(boardName) {
   );
 }
 
- /**********************************************************************************************/
 
 function buildHardwareTooltip(server) {
 
@@ -351,8 +362,6 @@ return `
   </div>
 `;
 }
-
- /**********************************************************************************************/
 
 
 function calculateRamConfig(ramString) {
@@ -391,7 +400,6 @@ function calculateRamConfig(ramString) {
   };
 }
 
- /**********************************************************************************************/
 
 function formatHardwareAge(days) {
 
@@ -416,7 +424,6 @@ function formatHardwareAge(days) {
   return `${years}y ${months}m`;
 }
 
- /**********************************************************************************************/
 
 function normalizeHardwareString(value) {
   if (!value) return "";
@@ -426,8 +433,7 @@ function normalizeHardwareString(value) {
     .trim();
 }
 
- /**********************************************************************************************/
-
+ 
 function extractHardwareModels(value) {
   if (!value) return [];
 
@@ -452,8 +458,7 @@ function extractHardwareModels(value) {
     .filter(Boolean);
 }
 
- /**********************************************************************************************/
-
+ 
 function resolveDriveEntries(driveString) {
   if (!driveString) return [];
 
@@ -475,21 +480,18 @@ function resolveDriveEntries(driveString) {
   return results;
 }
 
- /**********************************************************************************************/
-
+ 
 function buildDriveLabel(entry) {
   return `${entry.media} ${entry.capacityGB}GB`;
 }
 
- /**********************************************************************************************/
-
+ 
 function isOlderThanSixYears(days) {
   if (!days) return false;
   return days >= (6 * 365);
 }
 
- /**********************************************************************************************/
-
+ 
 function formatRackName(rack) {
   if (!rack) return "Unknown";
 
@@ -499,8 +501,6 @@ function formatRackName(rack) {
   return `Rack ${match[0]}`;
 }
 
-
- /**********************************************************************************************/
 
 function buildAllRacks(filteredServers) {
 
@@ -559,7 +559,6 @@ result.push({
   return result;
 }
 
-/**********************************************************************************************/
 
 function buildPlacementExplanation(s) {
 
@@ -590,8 +589,7 @@ function buildPlacementExplanation(s) {
   return reasons.map(r => `• ${r}`).join("<br>");
 }
 
- /**********************************************************************************************/
-
+ 
 function formatRackDisplay(rackId) {
 
   if (!rackId) return "Unknown Rack";
@@ -611,7 +609,7 @@ function formatRackDisplay(rackId) {
   return `Server Room ${roomNumber} - Rack ${rackNumber}`;
 }
 
-/**********************************************************************************************/
+
 function animateScroll(container, target, duration = 400) {
 
   const start = container.scrollTop;
@@ -639,6 +637,7 @@ function animateScroll(container, target, duration = 400) {
   requestAnimationFrame(animation);
 }
 
+
 function smoothScrollToDetail() {
 
   const content = document.getElementById("content");
@@ -654,8 +653,6 @@ function smoothScrollToDetail() {
   animateScroll(content, target, 400);
 }
 
-
-/**********************************************************************************************/
 
 function getRackClassification(dc, room, rack) {
 
@@ -675,7 +672,6 @@ function getRackClassification(dc, room, rack) {
   return null;
 }
 
-/**********************************************************************************************/
 
 function groupRacksByRoom(data) {
 
@@ -725,7 +721,6 @@ function groupRacksByRoom(data) {
   return result;
 }
 
-/**********************************************************************************************/
 
 function renderRoomUnassigned(list) {
   console.log("Rendering room unassigned", list.length);
@@ -769,6 +764,7 @@ function renderRoomUnassigned(list) {
   });
 }
 
+
 function createRoomUnassignedCard(room, list) {
 
   const roomNumber = room.replace(/\D/g,"");
@@ -806,6 +802,7 @@ function createRoomUnassignedCard(room, list) {
 
   return card;
 }
+
 
 function renderAllRooms(data) {
 
@@ -907,7 +904,7 @@ function createRackCard({ title, rack, list }) {
 card.onclick = () => {
 
   selectedRackId = rack;
-
+  log("Rack", `Selected rack ${rack}`);
   const filteredList = list.filter(s =>
     activeStatusFilters.size === 0 ||
     activeStatusFilters.has(
@@ -938,14 +935,7 @@ card.onclick = () => {
   return card;
 }
 
- /**********************************************************************************************/
-
-/* ========================= MAIN ========================= */
-
-
-
- /**********************************************************************************************/
-
+ 
 function populateFilters(data) {
 
   const filterMap = {
@@ -1024,9 +1014,10 @@ if (id === "filterDriveGeneric") {
   });
 }
 
- /**********************************************************************************************/
-
+ 
 function parseCSV(text) {
+
+  log("CSV", "Starting CSV parse");
 
   const result = Papa.parse(text, {
     header: true,
@@ -1083,6 +1074,8 @@ else if (slotFromLocation) {
   }
 }
 
+log("CSV", `Parsed ${result.data.length} rows`);
+
       return {
         hostname: row["Fully Qualified Domain Name"] || "",
         status: row["Hardware Status"] || "",
@@ -1110,10 +1103,10 @@ else if (slotFromLocation) {
     });
 }
 
-  /**********************************************************************************************/
-
 
 function renderRooms() {
+
+  log("Rooms", `Rendering rooms from ${rackServers.length} devices`);
 
   selectedRackId = null;
   currentRackServers = [];
@@ -1305,8 +1298,7 @@ function renderRacks(data, room) {
     });
 }
 
- /**********************************************************************************************/
-
+ 
 function renderUnassignedDetail(list) {
 
   const container = document.getElementById("rackDetail");
@@ -1390,9 +1382,9 @@ function renderUnassignedDetail(list) {
 }
 
 
- /**********************************************************************************************/
-
 function renderRackDetail(rack, list) {
+
+  log("Rack", `Render rack ${rack} (${list.length} devices)`);
 
   const container = document.getElementById("rackDetail");
 
@@ -1475,11 +1467,9 @@ function renderRackDetail(rack, list) {
     if (server) {
 
         if ((server.hardwareFunction || "").toLowerCase().includes("power")) {
-            console.log("POWER DEVICE DEBUG:");
             console.log("HardwareFunction:", server.hardwareFunction);
             console.log("Manufacturer:", server.manufacturer);
             console.log("Model:", server.model);
-            console.log(server);
         }
 
       const isNumeric = !isNaN(slotKey);
@@ -1575,8 +1565,7 @@ function renderRackDetail(rack, list) {
   });
 }
 
- /**********************************************************************************************/
-
+ 
 function renderPduPanel(rack, list) {
 
   const type = getRackPduType(list);
@@ -1606,13 +1595,7 @@ function renderPduPanel(rack, list) {
   
 
 function renderEatonPanel(rack, list) {
-console.log(
-  "POWER slots:",
-  list
-    .filter(s => !isNaN(Number(s.slot)))
-    .map(s => Number(s.slot))
-    .sort((a,b)=>a-b)
-);
+
 const rackInput = list
   .filter(s => !isNaN(Number(s.slot))) 
   .map(s => ({
@@ -1673,7 +1656,7 @@ container.innerHTML = `
 `;
   }
 
-  function renderServerTechPanel(rack, list) {
+function renderServerTechPanel(rack, list) {
 
   const rackInput = list
     .filter(s => !isNaN(Number(s.slot)))
@@ -1722,6 +1705,7 @@ container.innerHTML = `
     </div>
   `;
 }
+
 
 function renderAPCPanel(rack, list) {
 
@@ -1786,7 +1770,8 @@ function renderAPCPanel(rack, list) {
   `;
 }
 
-  function renderUsageBar(label, value, limit) {
+
+function renderUsageBar(label, value, limit) {
 
   const percent = Math.min((value / limit) * 100, 100);
 
@@ -1805,8 +1790,7 @@ function renderAPCPanel(rack, list) {
   `;
 }
 
- /**********************************************************************************************/
-
+ 
 function renderStatusOverview(data) {
 
   const container = document.getElementById("statusOverview");
@@ -1885,8 +1869,7 @@ function renderStatusOverview(data) {
   });
 }
 
- /**********************************************************************************************/
-
+ 
 function populatePlacementServers() {
 
   const select = document.getElementById("placementServerSelect");
@@ -1906,8 +1889,7 @@ function populatePlacementServers() {
   });
 }
 
- /**********************************************************************************************/
-
+ 
 function populatePlacementRooms(filteredServers) {
 
   const select = document.getElementById("placementRoomSelect");
@@ -1925,7 +1907,7 @@ function populatePlacementRooms(filteredServers) {
     select.appendChild(opt);
   });
 }
- /**********************************************************************************************/
+ 
 
 function renderPlacementAdvisor(suggestions = []) {
 
@@ -2115,6 +2097,8 @@ searchBtn.addEventListener("click", () => {
     filteredRacks,
     suggestBestSlot
   );
+
+  log("Placement", `Calculated ${suggestions.length} suggestions`);
 
   renderPlacementAdvisor(suggestions);
 });
