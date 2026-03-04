@@ -1114,6 +1114,9 @@ else if (slotFromLocation) {
 
 function renderRooms() {
 
+  selectedRackId = null;
+  currentRackServers = [];
+
   const search = document.getElementById("searchInput").value.toLowerCase();
 
   const filters = {
@@ -1197,9 +1200,9 @@ function renderRooms() {
     container.appendChild(btn);
   });
 
- if (!selectedRackId) {
+
   allBtn.click();
-}
+
 }
 
 
