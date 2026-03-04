@@ -906,11 +906,7 @@ function createRackCard({ title, rack, list }) {
       const phaseWarn = powerResult.phases.some(p => p > PHASE_LIMIT * 0.8);
       const phaseDanger = powerResult.phases.some(p => p > PHASE_LIMIT);
 
-      if (bankDanger || phaseDanger) {
-        powerState = "danger";
-        powerTooltip = "Power overload detected";
-      }
-      else if (bankWarn || phaseWarn) {
+      if (bankWarn || phaseWarn) {
         powerState = "warn";
         powerTooltip = "Power usage nearing limit";
       }
@@ -918,11 +914,6 @@ function createRackCard({ title, rack, list }) {
     }
 
   }
-
-
-  /* =========================
-     CARD HTML
-  ========================= */
 
   card.innerHTML = `
     ${classification ? `
@@ -956,13 +947,13 @@ function createRackCard({ title, rack, list }) {
     </div>
   `;
 
-  if (powerState) {
-    const indicator = document.createElement("div");
-    indicator.className = `rack-power-warning ${powerState}`;
-    indicator.innerHTML = powerState === "danger" ? "🔺" : "⚠";
-    indicator.title = powerTooltip;
-    card.appendChild(indicator);
-  }
+if (powerState === "warn") {
+  const indicator = document.createElement("div");
+  indicator.className = "rack-power-warning warn";
+  indicator.innerHTML = "⚠";
+  indicator.title = "Power usage above 80%";
+  card.appendChild(indicator);
+}
 
   card.onclick = () => {
 
