@@ -1191,15 +1191,18 @@ allBtn.onclick = () => {
     btn.className = "room-btn";
     btn.textContent = room;
 
-    btn.onclick = () => {
-      document.querySelectorAll(".room-btn")
-        .forEach(b => b.classList.remove("active"));
+  btn.onclick = () => {
 
-      btn.classList.add("active");
+  activeRoomFilter = room;   
 
-      renderRacks(filtered, room);
-      renderStatusOverview(rackServers);
-    };
+  document.querySelectorAll(".room-btn")
+    .forEach(b => b.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  renderRacks(filtered, room);
+  renderStatusOverview(rackServers);
+};
 
     container.appendChild(btn);
   });
