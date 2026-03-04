@@ -948,10 +948,18 @@ function createRackCard({ title, rack, list }) {
   `;
 
 if (powerState === "warn") {
+
   const indicator = document.createElement("div");
   indicator.className = "rack-power-warning warn";
-  indicator.innerHTML = "⚠";
-  indicator.title = "Power usage above 80%";
+
+  indicator.textContent = "⚠";
+
+  const tooltip = document.createElement("span");
+  tooltip.className = "pill-tooltip";
+  tooltip.textContent = "Power bank or phase above 80% load";
+
+  indicator.appendChild(tooltip);
+
   card.appendChild(indicator);
 }
 
