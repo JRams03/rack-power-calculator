@@ -1205,7 +1205,19 @@ allBtn.onclick = () => {
   });
 
 
+  if (activeRoomFilter === "ALL") {
   allBtn.click();
+} else {
+
+  const roomBtn = [...container.children]
+    .find(b => b.textContent === activeRoomFilter);
+
+  if (roomBtn) {
+    roomBtn.click();
+  } else {
+    allBtn.click();
+  }
+}
 
 }
 
